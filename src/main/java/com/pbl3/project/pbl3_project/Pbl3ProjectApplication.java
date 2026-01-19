@@ -6,6 +6,6 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 @SpringBootApplication
 public class Pbl3ProjectApplication {
 	public static void main(String[] args) {
-		SpringApplication.run(Pbl3ProjectApplication.class, args);
-	}
+        javafx.application.Application.launch(JavaFxApplication.class, args);
+    }
 }
