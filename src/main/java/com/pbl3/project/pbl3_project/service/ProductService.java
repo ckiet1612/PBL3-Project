@@ -17,7 +17,7 @@ public class ProductService {
     }
 
     public List<Product> getAllProducts() {
-        return productRepository.findAll();
+        return productRepository.findAllByIsDeletedFalse();
     }
 
     public Optional<Product> getProductById(Long id) {
@@ -29,6 +29,11 @@ public class ProductService {
     }
 
     public void deleteProduct(Long id) {
-        productRepository.deleteById(id);
+        Optional<Product> product = productRepository.findById(id);
+        if (product.isPresent()) {
+            Product p = product.get();
+            p.setDeleted(true);
+            productRepository.save(p);
+        }
     }
 }
