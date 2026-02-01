@@ -1,15 +1,41 @@
-/* JavaFX CSS for Sales Management System */
+
+/* Product Header Specifics */
+.product-header-title {
+    -fx-font-size: 24px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #37474F;
+    -fx-padding: 0 0 0 10;
+}
+
+.back-nav-button {
+    -fx-background-color: transparent;
+    -fx-text-fill: #1976D2;
+    -fx-font-size: 14px;
+    -fx-font-weight: bold;
+    -fx-cursor: hand;
+    -fx-padding: 8 12;
+    -fx-border-color: #E0E0E0;
+    -fx-border-radius: 20;
+    -fx-border-width: 1;
+    -fx-background-radius: 20;
+}
+
+.back-nav-button:hover {
+    -fx-background-color: #E3F2FD;
+    -fx-border-color: #1976D2;
+}
+
 
 /* Font Faces */
 @font-face {
     font-family: 'Be Vietnam Pro';
-    src: url('/fonts/BeVietnamPro-Regular.ttf');
+    src: url('fonts/BeVietnamPro-Regular.ttf');
 }
 
 @font-face {
     font-family: 'Be Vietnam Pro';
     font-weight: bold;
-    src: url('/fonts/BeVietnamPro-Bold.ttf');
+    src: url('fonts/BeVietnamPro-Bold.ttf');
 }
 
 /* Global App Styling */
@@ -69,6 +95,7 @@
 
 .success-button:hover {
     -fx-background-color: #388E3C;
+    -fx-text-fill: white;
 }
 
 .danger-button {
@@ -78,13 +105,14 @@
 
 .danger-button:hover {
     -fx-background-color: #D32F2F;
+    -fx-text-fill: white;
 }
 
 /* Sidebar */
 .sidebar {
     -fx-background-color: #FAFAFA;
     -fx-background-radius: 20;
-    -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.1), 10, 0, 5, 5);
+    -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.15), 15, 0, 3, 0);
     -fx-padding: 20;
     -fx-spacing: 15;
 }
@@ -94,7 +122,7 @@
     -fx-text-fill: #546E7A;
     -fx-alignment: CENTER_LEFT;
     -fx-font-size: 14px;
-    -fx-pref-width: 200;
+    -fx-pref-width: 190;
     -fx-background-radius: 20;
     -fx-padding: 10 15;
     -fx-effect: null;
@@ -113,6 +141,7 @@
 }
 
 /* Text Fields */
+/* Text Fields */
 .text-field {
     -fx-background-color: white;
     -fx-background-radius: 10;
@@ -124,6 +153,101 @@
 
 .text-field:focused {
     -fx-border-color: #1976D2;
+    -fx-background-color: #ffffff;
+    -fx-effect: dropshadow(three-pass-box, rgba(25, 118, 210, 0.2), 5, 0, 0, 0);
+}
+
+/* ComboBox Styling */
+.combo-box {
+    -fx-background-color: white;
+    -fx-background-radius: 10;
+    -fx-border-color: #B0BEC5;
+    -fx-border-width: 1;
+    -fx-border-radius: 10;
+    -fx-padding: 4 8;
+    -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.05), 3, 0, 0, 1);
+}
+
+.combo-box:focused, .combo-box:showing {
+    -fx-border-color: #1976D2;
+    -fx-effect: dropshadow(three-pass-box, rgba(25, 118, 210, 0.2), 5, 0, 0, 0);
+}
+
+.combo-box .list-cell {
+    -fx-background-color: transparent;
+    -fx-text-fill: #37474F;
+    -fx-padding: 4 2;
+}
+
+.combo-box .arrow-button {
+    -fx-background-color: transparent;
+}
+
+.combo-box .arrow {
+    -fx-background-color: #78909C;
+    -fx-scale-x: 0.8;
+    -fx-scale-y: 0.8;
+}
+
+.combo-box-popup .list-view {
+    -fx-background-color: white;
+    -fx-background-radius: 8;
+    -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.1), 10, 0, 5, 5);
+    -fx-padding: 4;
+}
+
+.combo-box-popup .list-cell {
+    -fx-padding: 8 12;
+    -fx-background-color: white;
+    -fx-text-fill: #37474F;
+    -fx-background-radius: 4;
+}
+
+.combo-box-popup .list-cell:filled:selected, 
+.combo-box-popup .list-cell:filled:hover {
+    -fx-background-color: #E3F2FD;
+    -fx-text-fill: #1976D2;
+    -fx-cursor: hand;
+}
+
+/* Context Menu Styling */
+.context-menu {
+    -fx-background-color: white;
+    -fx-background-radius: 12;
+    -fx-background-insets: 0;
+    -fx-border-width: 0;
+    -fx-border-color: transparent;
+    -fx-padding: 8;
+    -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.1), 10, 0, 5, 5);
+}
+
+.context-menu .scroll-pane {
+    -fx-background-color: transparent;
+}
+
+.context-menu .scroll-pane .viewport {
+    -fx-background-color: transparent;
+}
+
+.context-menu .menu-item {
+    -fx-background-color: transparent;
+    -fx-padding: 8 12;
+    -fx-background-radius: 8; /* Rounded corners for the item itself */
+}
+
+.context-menu .menu-item .label {
+    -fx-text-fill: #37474F;
+    -fx-font-size: 13px;
+}
+
+.context-menu .menu-item:hover {
+    -fx-background-color: #E3F2FD;
+    -fx-cursor: hand;
+    -fx-background-radius: 8; /* Ensure hover/focus is rounded */
+}
+
+.context-menu .menu-item:hover .label {
+    -fx-text-fill: #1976D2;
 }
 
 /* Tables */
@@ -223,4 +347,153 @@
 .stat-card .stat-label {
     -fx-font-size: 14px;
     -fx-text-fill: #78909C;
+}
+
+/* Bar Chart Styling */
+.chart-bar {
+    -fx-bar-fill: #4CAF50;
+}
+.chart-bar:hover {
+    -fx-bar-fill: #66BB6A;
+}
+.chart {
+    -fx-background-color: transparent;
+}
+.chart-plot-background {
+    -fx-background-color: #FAFAFA;
+}
+.axis-label {
+    -fx-text-fill: #607D8B;
+    -fx-font-size: 12px;
+}
+
+/* POS Grid View Styles */
+.product-card {
+    -fx-background-color: white;
+    -fx-background-radius: 12;
+    -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.1), 5, 0, 2, 2);
+    -fx-padding: 0;
+    -fx-cursor: hand;
+    -fx-border-color: transparent;
+    -fx-border-width: 2;
+    -fx-border-radius: 12;
+}
+
+.product-card:hover {
+    -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.2), 10, 0, 4, 4);
+    -fx-translate-y: -2;
+    -fx-border-color: #4CAF50;
+}
+
+.product-card-unavailable {
+    -fx-opacity: 0.7;
+    -fx-cursor: default;
+}
+
+.product-card-unavailable:hover {
+    -fx-translate-y: 0;
+    -fx-border-color: #9E9E9E;
+}
+
+.card-image-placeholder {
+    -fx-background-color: #E0F2F1;
+    -fx-background-radius: 12 12 0 0;
+    -fx-alignment: CENTER;
+}
+
+.card-name {
+    -fx-font-size: 14px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #37474F;
+    -fx-wrap-text: true;
+    -fx-text-alignment: CENTER;
+}
+
+.card-price {
+    -fx-font-size: 13px;
+    -fx-text-fill: #2E7D32;
+    -fx-font-weight: bold;
+}
+
+.card-stock {
+    -fx-font-size: 11px;
+    -fx-text-fill: #90A4AE;
+}
+
+.card-out-stock {
+    -fx-font-size: 11px;
+    -fx-text-fill: #F44336;
+    -fx-font-weight: bold;
+}
+
+/* Product Management - Category View */
+.category-card {
+    -fx-background-color: white;
+    -fx-background-radius: 12;
+    -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.1), 5, 0, 2, 2);
+    -fx-padding: 20;
+    -fx-cursor: hand;
+    -fx-alignment: CENTER;
+    -fx-border-color: transparent;
+    -fx-border-width: 2;
+    -fx-border-radius: 12;
+}
+
+.category-card:hover {
+    -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.2), 10, 0, 4, 4);
+    -fx-translate-y: -2;
+    -fx-border-color: #1976D2;
+}
+
+.category-card-title {
+    -fx-font-size: 16px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #1976D2;
+}
+
+.category-card-count {
+    -fx-font-size: 13px;
+    -fx-text-fill: #78909C;
+}
+
+/* Modern TabPane Styling */
+.tab-pane {
+    -fx-background-color: transparent;
+}
+
+.tab-header-area .tab-header-background {
+    -fx-background-color: transparent;
+}
+
+.tab {
+    -fx-background-color: white;
+    -fx-background-insets: 0;
+    -fx-background-radius: 10 10 0 0;
+    -fx-padding: 8 20;
+    -fx-border-color: transparent;
+    -fx-focus-color: transparent;
+    -fx-faint-focus-color: transparent;
+}
+
+.tab:selected {
+    -fx-background-color: #1976D2; /* Dark Blue */
+    -fx-font-weight: bold;
+}
+
+.tab:hover {
+    -fx-background-color: #E3F2FD; /* Light Blue */
+}
+
+.tab:selected:hover {
+    -fx-background-color: #1976D2; /* Keep Dark Blue */
+}
+
+.tab-label {
+    -fx-text-fill: #546E7A;
+    -fx-font-size: 13px;
+    -fx-font-weight: bold;
+}
+
+.tab:selected .tab-label {
+    -fx-text-fill: white;
 }

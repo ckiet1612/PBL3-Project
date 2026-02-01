@@ -7,4 +7,7 @@ import org.springframework.stereotype.Repository;
 @Repository
 public interface ProductRepository extends JpaRepository<Product, Long> {
     java.util.List<Product> findAllByIsDeletedFalse();
+    
+    // Count products with quantity below threshold (low stock)
+    long countByQuantityLessThanAndIsDeletedFalse(int threshold);
 }
