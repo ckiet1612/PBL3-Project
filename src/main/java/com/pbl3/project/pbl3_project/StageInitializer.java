@@ -458,7 +458,7 @@ public class StageInitializer implements ApplicationListener<StageReadyEvent> {
         categoryView.setAlignment(Pos.TOP_CENTER);
         
         Label title = new Label("Product Categories");
-        title.setStyle("-fx-font-size: 24px; -fx-font-weight: bold; -fx-text-fill: #37474F;");
+        title.setStyle("-fx-font-size: 24px; -fx-font-weight: bold; -fx-text-fill: #1976D2;");
         
         javafx.scene.layout.FlowPane categoryGrid = new javafx.scene.layout.FlowPane();
         categoryGrid.setHgap(20);
@@ -662,15 +662,42 @@ public class StageInitializer implements ApplicationListener<StageReadyEvent> {
     
     private javafx.scene.Node createSalesView(com.pbl3.project.pbl3_project.entity.User user) {
         javafx.scene.control.SplitPane splitPane = new javafx.scene.control.SplitPane();
-        splitPane.setDividerPositions(0.65); // 65% Products, 35% Cart
+        splitPane.setDividerPositions(0.65);
 
-        // LEFT: Products (Grid View)
-        VBox leftBox = new VBox(10);
-        leftBox.setPadding(new Insets(10));
-        Label leftTitle = new Label("Product Catalog");
-        leftTitle.getStyleClass().add("header-label");
+        // === LEFT SIDE: Switchable Views ===
+        javafx.scene.layout.StackPane leftPane = new javafx.scene.layout.StackPane();
         
-        // Search Filter
+        // --- 1. Category Grid View ---
+        VBox categoryView = new VBox(20);
+        categoryView.setPadding(new Insets(20));
+        categoryView.setAlignment(Pos.TOP_CENTER);
+        
+        Label catTitle = new Label("Select Category");
+        catTitle.setStyle("-fx-font-size: 24px; -fx-font-weight: bold; -fx-text-fill: #1976D2;");
+        
+        javafx.scene.layout.FlowPane categoryGrid = new javafx.scene.layout.FlowPane();
+        categoryGrid.setHgap(20);
+        categoryGrid.setVgap(20);
+        categoryGrid.setAlignment(Pos.CENTER);
+        
+        categoryView.getChildren().addAll(catTitle, categoryGrid);
+        
+        // --- 2. Product List View ---
+        VBox productView = new VBox(10);
+        productView.setPadding(new Insets(10));
+        productView.setVisible(false);
+        
+        javafx.scene.layout.HBox productHeader = new javafx.scene.layout.HBox(10);
+        productHeader.setAlignment(Pos.CENTER_LEFT);
+        
+        Button backBtn = new Button("← Back");
+        backBtn.getStyleClass().add("button");
+        
+        Label productTitle = new Label("Products");
+        productTitle.getStyleClass().add("header-label");
+        
+        productHeader.getChildren().addAll(backBtn, productTitle);
+        
         TextField searchField = new TextField();
         searchField.setPromptText("Search products...");
         searchField.setStyle("-fx-background-radius: 20; -fx-padding: 8 15;");
@@ -685,10 +712,12 @@ public class StageInitializer implements ApplicationListener<StageReadyEvent> {
         scrollPane.setFitToWidth(true);
         scrollPane.setStyle("-fx-background-color: transparent; -fx-background: transparent;");
         
-        leftBox.getChildren().addAll(leftTitle, searchField, scrollPane);
+        productView.getChildren().addAll(productHeader, searchField, scrollPane);
         VBox.setVgrow(scrollPane, javafx.scene.layout.Priority.ALWAYS);
-
-        // RIGHT: Cart
+        
+        leftPane.getChildren().addAll(categoryView, productView);
+        
+        // === RIGHT SIDE: Cart ===
         VBox rightBox = new VBox(10);
         rightBox.setPadding(new Insets(10));
         rightBox.setStyle("-fx-background-color: #ECEFF1;");
@@ -707,15 +736,19 @@ public class StageInitializer implements ApplicationListener<StageReadyEvent> {
         javafx.collections.ObservableList<com.pbl3.project.pbl3_project.dto.CreateOrderRequest.OrderItemRequest> cartItems = javafx.collections.FXCollections.observableArrayList();
         cartTable.setItems(cartItems);
 
-        // Load Products & Render Grid
+        // === Data & Logic ===
         java.util.List<com.pbl3.project.pbl3_project.entity.Product> allProducts = productService.getAllProducts();
-        Runnable renderGrid = () -> {
+        final com.pbl3.project.pbl3_project.entity.Category[] selectedCategory = {null};
+        
+        Runnable renderProducts = () -> {
             productGrid.getChildren().clear();
             String query = searchField.getText().toLowerCase();
             
             for (com.pbl3.project.pbl3_project.entity.Product p : allProducts) {
-                if (p.getName().toLowerCase().contains(query)) {
-                    // Create Product Card
+                boolean matchName = p.getName().toLowerCase().contains(query);
+                boolean matchCat = selectedCategory[0] != null && p.getCategory() != null && p.getCategory().getId().equals(selectedCategory[0].getId());
+                
+                if (matchName && matchCat) {
                     VBox card = new VBox(5);
                     card.getStyleClass().add("product-card");
                     card.setPrefSize(140, 180);
@@ -723,7 +756,6 @@ public class StageInitializer implements ApplicationListener<StageReadyEvent> {
                     
                     if (p.getQuantity() <= 0) card.getStyleClass().add("product-card-unavailable");
                     
-                    // Image Placeholder
                     javafx.scene.layout.StackPane imgPlaceholder = new javafx.scene.layout.StackPane();
                     imgPlaceholder.getStyleClass().add("card-image-placeholder");
                     imgPlaceholder.setPrefSize(140, 100);
@@ -731,7 +763,6 @@ public class StageInitializer implements ApplicationListener<StageReadyEvent> {
                     initial.setStyle("-fx-font-size: 30px; -fx-text-fill: #009688; -fx-font-weight: bold;");
                     imgPlaceholder.getChildren().add(initial);
                     
-                    // Info
                     VBox info = new VBox(3);
                     info.setPadding(new Insets(10));
                     info.setAlignment(Pos.CENTER);
@@ -755,26 +786,24 @@ public class StageInitializer implements ApplicationListener<StageReadyEvent> {
                     info.getChildren().addAll(nameLbl, priceLbl, stockLbl);
                     card.getChildren().addAll(imgPlaceholder, info);
                     
-                    // Interaction: Add to Cart
                     card.setOnMouseClicked(e -> {
                         if (p.getQuantity() > 0) {
-                             var existing = cartItems.stream().filter(i -> i.getProductId().equals(p.getId())).findFirst();
-                             if (existing.isPresent()) {
-                                 existing.get().setQuantity(existing.get().getQuantity() + 1);
-                                 cartTable.refresh();
-                             } else {
-                                 var item = new com.pbl3.project.pbl3_project.dto.CreateOrderRequest.OrderItemRequest();
-                                 item.setProductId(p.getId());
-                                 item.setQuantity(1);
-                                 cartItems.add(item);
-                             }
-                             // Simple "pulse" animation on click
-                             javafx.animation.ScaleTransition st = new javafx.animation.ScaleTransition(javafx.util.Duration.millis(100), card);
-                             st.setFromX(1.0); st.setFromY(1.0);
-                             st.setToX(0.95); st.setToY(0.95);
-                             st.setAutoReverse(true);
-                             st.setCycleCount(2);
-                             st.play();
+                            var existing = cartItems.stream().filter(i -> i.getProductId().equals(p.getId())).findFirst();
+                            if (existing.isPresent()) {
+                                existing.get().setQuantity(existing.get().getQuantity() + 1);
+                                cartTable.refresh();
+                            } else {
+                                var item = new com.pbl3.project.pbl3_project.dto.CreateOrderRequest.OrderItemRequest();
+                                item.setProductId(p.getId());
+                                item.setQuantity(1);
+                                cartItems.add(item);
+                            }
+                            javafx.animation.ScaleTransition st = new javafx.animation.ScaleTransition(javafx.util.Duration.millis(100), card);
+                            st.setFromX(1.0); st.setFromY(1.0);
+                            st.setToX(0.95); st.setToY(0.95);
+                            st.setAutoReverse(true);
+                            st.setCycleCount(2);
+                            st.play();
                         } else {
                             toastService.showWarning("Product out of stock!");
                         }
@@ -785,8 +814,42 @@ public class StageInitializer implements ApplicationListener<StageReadyEvent> {
             }
         };
         
-        renderGrid.run();
-        searchField.textProperty().addListener((obs, old, val) -> renderGrid.run());
+        // Load Categories into Grid
+        java.util.List<com.pbl3.project.pbl3_project.entity.Category> categories = categoryRepository.findAll();
+        for (com.pbl3.project.pbl3_project.entity.Category cat : categories) {
+            long count = allProducts.stream().filter(p -> p.getCategory() != null && p.getCategory().getId().equals(cat.getId())).count();
+            
+            VBox catCard = new VBox(10);
+            catCard.getStyleClass().add("category-card");
+            catCard.setPrefSize(160, 120);
+            catCard.setAlignment(Pos.CENTER);
+            
+            Label catName = new Label(cat.getName());
+            catName.setStyle("-fx-font-size: 16px; -fx-font-weight: bold; -fx-text-fill: #1976D2;");
+            
+            Label catCount = new Label(count + " products");
+            catCount.setStyle("-fx-font-size: 12px; -fx-text-fill: #78909C;");
+            
+            catCard.getChildren().addAll(catName, catCount);
+            
+            catCard.setOnMouseClicked(e -> {
+                selectedCategory[0] = cat;
+                productTitle.setText(cat.getName());
+                categoryView.setVisible(false);
+                productView.setVisible(true);
+                renderProducts.run();
+            });
+            
+            categoryGrid.getChildren().add(catCard);
+        }
+        
+        backBtn.setOnAction(e -> {
+            productView.setVisible(false);
+            categoryView.setVisible(true);
+            selectedCategory[0] = null;
+        });
+        
+        searchField.textProperty().addListener((obs, old, val) -> renderProducts.run());
 
         Button checkoutButton = new Button("CHECKOUT");
         checkoutButton.getStyleClass().addAll("button", "success-button");
@@ -800,10 +863,9 @@ public class StageInitializer implements ApplicationListener<StageReadyEvent> {
                 orderService.createOrder(req);
                 toastService.showSuccess("Order created successfully!");
                 cartItems.clear();
-                // Refresh product grid to update stock
                 allProducts.clear();
                 allProducts.addAll(productService.getAllProducts());
-                renderGrid.run();
+                renderProducts.run();
             } catch (Exception ex) {
                 toastService.showError("Order Failed: " + ex.getMessage());
             }
@@ -811,7 +873,7 @@ public class StageInitializer implements ApplicationListener<StageReadyEvent> {
 
         rightBox.getChildren().addAll(rightTitle, cartTable, checkoutButton);
         VBox.setVgrow(cartTable, javafx.scene.layout.Priority.ALWAYS);
-        splitPane.getItems().addAll(leftBox, rightBox);
+        splitPane.getItems().addAll(leftPane, rightBox);
         return splitPane;
     }
     
