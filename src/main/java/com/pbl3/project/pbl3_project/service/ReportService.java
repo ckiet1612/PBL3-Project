@@ -47,6 +47,15 @@ public class ReportService {
     public long getLowStockCount(int threshold) {
         return productRepository.countByQuantityLessThanAndIsDeletedFalse(threshold);
     }
+
+    // Dynamic: each product has its own min_stock_level
+    public java.util.List<com.pbl3.project.pbl3_project.entity.Product> getLowStockProducts() {
+        return productRepository.findLowStockProducts();
+    }
+
+    public long countLowStockProducts() {
+        return productRepository.countLowStockProducts();
+    }
     
     // Get daily revenue for the last 7 days
     public Map<String, Double> getLast7DaysRevenue() {

@@ -9,9 +9,13 @@ import javafx.scene.control.PasswordField;
 import javafx.scene.control.TextField;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
+import javafx.animation.TranslateTransition;
+import javafx.animation.ScaleTransition;
+import javafx.util.Duration;
 import org.springframework.context.ApplicationListener;
 import org.springframework.stereotype.Component;
 import com.pbl3.project.pbl3_project.service.*;
+import com.pbl3.project.pbl3_project.StageReadyEvent;
 
 @Component
 public class StageInitializer implements ApplicationListener<StageReadyEvent> {
@@ -27,6 +31,9 @@ public class StageInitializer implements ApplicationListener<StageReadyEvent> {
     private final SupplierService supplierService;
     private final OriginService originService;
     private final UnitService unitService;
+    private final ImportOrderService importOrderService;
+    private final ReceiptService receiptService;
+    private final InventoryTransactionService transactionService;
 
     public StageInitializer(AuthService authService,
                             ProductService productService,
@@ -38,7 +45,10 @@ public class StageInitializer implements ApplicationListener<StageReadyEvent> {
                             BrandService brandService,
                             SupplierService supplierService,
                             OriginService originService,
-                            UnitService unitService) {
+                            UnitService unitService,
+                            ImportOrderService importOrderService,
+                            ReceiptService receiptService,
+                            InventoryTransactionService transactionService) {
         this.authService = authService;
         this.productService = productService;
         this.categoryRepository = categoryRepository;
@@ -50,6 +60,9 @@ public class StageInitializer implements ApplicationListener<StageReadyEvent> {
         this.supplierService = supplierService;
         this.originService = originService;
         this.unitService = unitService;
+        this.importOrderService = importOrderService;
+        this.receiptService = receiptService;
+        this.transactionService = transactionService;
     }
     
 
@@ -63,13 +76,18 @@ public class StageInitializer implements ApplicationListener<StageReadyEvent> {
         switchScene(stage, user, "Products", "nav-products", content);
     }
 
+    private void showImportOrderScene(Stage stage, com.pbl3.project.pbl3_project.entity.User user) {
+        javafx.scene.Node content = createImportOrderView(stage, user);
+        switchScene(stage, user, "Import Goods", "nav-import", content);
+    }
+
     private void showOrderHistoryScene(Stage stage, com.pbl3.project.pbl3_project.entity.User user) {
         VBox content = createOrderHistoryView(stage, user);
         switchScene(stage, user, "Order History", "nav-history", content);
     }
     
     private void showSalesScene(Stage stage, com.pbl3.project.pbl3_project.entity.User user) {
-        javafx.scene.Node content = createSalesView(user);
+        javafx.scene.Node content = createSalesView(stage, user);
         switchScene(stage, user, "Sales (POS)", "nav-sales", content);
     }
     
@@ -370,6 +388,14 @@ public class StageInitializer implements ApplicationListener<StageReadyEvent> {
         leftBox.getChildren().addAll(backBtn, categoryTitle);
         toolbar.setLeft(leftBox);
         
+        // Search field for filtering within category
+        TextField categorySearchField = new TextField();
+        categorySearchField.setPromptText("Search products...");
+        categorySearchField.setPrefWidth(250);
+        categorySearchField.getStyleClass().add("search-field");
+        toolbar.setCenter(categorySearchField);
+        javafx.scene.layout.BorderPane.setMargin(categorySearchField, new Insets(0, 15, 0, 15));
+        
         Button addButton = new Button("+ Add Product");
         addButton.getStyleClass().addAll("button", "success-button");
         toolbar.setRight(addButton);
@@ -384,6 +410,19 @@ public class StageInitializer implements ApplicationListener<StageReadyEvent> {
         
         javafx.scene.control.TableColumn<com.pbl3.project.pbl3_project.entity.Product, String> nameCol = new javafx.scene.control.TableColumn<>("Product Name");
         nameCol.setCellValueFactory(new javafx.scene.control.cell.PropertyValueFactory<>("name"));
+        nameCol.setCellFactory(col -> new javafx.scene.control.TableCell<com.pbl3.project.pbl3_project.entity.Product, String>() {
+            @Override
+            protected void updateItem(String item, boolean empty) {
+                super.updateItem(item, empty);
+                if (empty || item == null) {
+                    setText(null);
+                    setGraphic(null);
+                } else {
+                    setText(item);
+                    setStyle("-fx-text-fill: #1976D2; -fx-font-weight: bold;");
+                }
+            }
+        });
         
         javafx.scene.control.TableColumn<com.pbl3.project.pbl3_project.entity.Product, Double> priceCol = new javafx.scene.control.TableColumn<>("Price");
         priceCol.setCellValueFactory(new javafx.scene.control.cell.PropertyValueFactory<>("price"));
@@ -399,7 +438,7 @@ public class StageInitializer implements ApplicationListener<StageReadyEvent> {
             editItem.setStyle("-fx-text-fill: #1976D2;");
             editItem.setOnAction(event -> {
                 com.pbl3.project.pbl3_project.entity.Product product = row.getItem();
-                showProductDialog(stage, product, product.getCategory(), () -> {
+                showProductDialog(stage, product, product.getCategory(), user, () -> {
                      if (productListView.getUserData() instanceof Runnable) ((Runnable)productListView.getUserData()).run();
                 });
             });
@@ -416,7 +455,7 @@ public class StageInitializer implements ApplicationListener<StageReadyEvent> {
                 int deletedCount = 0;
                 for (com.pbl3.project.pbl3_project.entity.Product product : selectedItems) {
                     try {
-                        productService.deleteProduct(product.getId());
+                        productService.deleteProduct(product.getId(), user);
                         table.getItems().remove(product);
                         deletedCount++;
                     } catch (Exception ex) {
@@ -483,7 +522,7 @@ public class StageInitializer implements ApplicationListener<StageReadyEvent> {
                 card.setPrefSize(200, 120);
                 
                 Label nameLbl = new Label(cat.getName());
-                nameLbl.getStyleClass().add("category-card-title");
+                nameLbl.setStyle("-fx-font-size: 16px; -fx-font-weight: bold; -fx-text-fill: #1976D2;");
                 
                 Label countLbl = new Label(count + " Products");
                 countLbl.getStyleClass().add("category-card-count");
@@ -494,6 +533,7 @@ public class StageInitializer implements ApplicationListener<StageReadyEvent> {
                     // Navigate to Product List
                     selectedCategory[0] = cat;
                     categoryTitle.setText(cat.getName());
+                    categorySearchField.clear();
                     categoryView.setVisible(false);
                     productListView.setVisible(true);
                     
@@ -511,22 +551,35 @@ public class StageInitializer implements ApplicationListener<StageReadyEvent> {
         // Refresh product list logic (store as userData)
         Runnable refreshProductList = () -> {
             if (selectedCategory[0] != null) {
+                String searchText = categorySearchField.getText() == null ? "" : categorySearchField.getText().trim().toLowerCase();
+                final String query = searchText;
                 java.util.List<com.pbl3.project.pbl3_project.entity.Product> filtered = productService.getAllProducts().stream()
                         .filter(p -> p.getCategory() != null && p.getCategory().getId().equals(selectedCategory[0].getId()))
+                        .filter(p -> {
+                            if (query.isEmpty()) return true;
+                            boolean matchName = p.getName() != null && p.getName().toLowerCase().contains(query);
+                            boolean matchSku = p.getSku() != null && p.getSku().toLowerCase().contains(query);
+                            boolean matchBrand = p.getBrand() != null && p.getBrand().getName() != null && p.getBrand().getName().toLowerCase().contains(query);
+                            return matchName || matchSku || matchBrand;
+                        })
                         .collect(java.util.stream.Collectors.toList());
                 table.setItems(javafx.collections.FXCollections.observableArrayList(filtered));
             }
         };
         productListView.setUserData(refreshProductList);
         
+        // Live search: filter as user types
+        categorySearchField.textProperty().addListener((obs, old, val) -> refreshProductList.run());
+        
         backBtn.setOnAction(e -> {
             productListView.setVisible(false);
             categoryView.setVisible(true);
             selectedCategory[0] = null;
+            categorySearchField.clear();
             loadCategories.run(); // Refresh counts
         });
         
-        addButton.setOnAction(e -> showProductDialog(stage, null, selectedCategory[0], () -> {
+        addButton.setOnAction(e -> showProductDialog(stage, null, selectedCategory[0], user, () -> {
             // After add, refresh current view
             if (productListView.isVisible()) refreshProductList.run();
             else loadCategories.run();
@@ -550,7 +603,7 @@ public class StageInitializer implements ApplicationListener<StageReadyEvent> {
         java.util.Map<String, Object> dailyStats = reportService.getDailyStats();
         double todayRevenue = (Double) dailyStats.get("revenue");
         long todayOrders = (Long) dailyStats.get("orders");
-        long lowStockCount = reportService.getLowStockCount(10); // threshold: 10 items
+        long lowStockCount = reportService.countLowStockProducts();
         
         // Create 3 stat cards
         VBox revenueCard = createDashboardCard("Today's Revenue", 
@@ -558,7 +611,7 @@ public class StageInitializer implements ApplicationListener<StageReadyEvent> {
         VBox ordersCard = createDashboardCard("Orders Today", 
             String.valueOf(todayOrders), "#2196F3");
         VBox lowStockCard = createDashboardCard("Low Stock Items", 
-            String.valueOf(lowStockCount), lowStockCount > 0 ? "#FF9800" : "#9E9E9E");
+            String.valueOf(lowStockCount), lowStockCount > 0 ? "#F44336" : "#9E9E9E");
         
         javafx.scene.layout.HBox.setHgrow(revenueCard, javafx.scene.layout.Priority.ALWAYS);
         javafx.scene.layout.HBox.setHgrow(ordersCard, javafx.scene.layout.Priority.ALWAYS);
@@ -581,6 +634,7 @@ public class StageInitializer implements ApplicationListener<StageReadyEvent> {
         barChart.setAnimated(true);
         barChart.setCategoryGap(20);
         barChart.setBarGap(5);
+        barChart.setMaxHeight(250);
         
         javafx.scene.chart.XYChart.Series<String, Number> series = new javafx.scene.chart.XYChart.Series<>();
         series.setName("Revenue");
@@ -591,13 +645,90 @@ public class StageInitializer implements ApplicationListener<StageReadyEvent> {
         }
         
         barChart.getData().add(series);
-        VBox.setVgrow(barChart, javafx.scene.layout.Priority.ALWAYS);
         
         // Style chart bars with green color
         barChart.lookupAll(".chart-bar").forEach(node -> 
             node.setStyle("-fx-bar-fill: #4CAF50;"));
-        
-        content.getChildren().addAll(statsRow, chartTitle, barChart);
+
+        // --- LOW STOCK ALERT PANEL ---
+        java.util.List<com.pbl3.project.pbl3_project.entity.Product> lowStockProducts = reportService.getLowStockProducts();
+
+        VBox lowStockPanel = new VBox(10);
+        lowStockPanel.setPadding(new Insets(15));
+        lowStockPanel.setStyle("-fx-background-color: #FFF3F3; -fx-background-radius: 12; " +
+            "-fx-border-color: #F44336; -fx-border-radius: 12; -fx-border-width: 2; " +
+            "-fx-effect: dropshadow(three-pass-box, rgba(244,67,54,0.15), 8, 0, 0, 3);");
+
+        // Create SVG check icon (green, minimalist - matching Figma)
+        javafx.scene.shape.SVGPath checkIcon = new javafx.scene.shape.SVGPath();
+        checkIcon.setContent("M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z");
+        checkIcon.setFill(javafx.scene.paint.Color.web("#00C853"));
+        checkIcon.setScaleX(0.8); checkIcon.setScaleY(0.8);
+
+        // Create SVG cross icon (red/pink, minimalist - matching Figma)
+        javafx.scene.shape.SVGPath crossIcon = new javafx.scene.shape.SVGPath();
+        crossIcon.setContent("M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z");
+        crossIcon.setFill(javafx.scene.paint.Color.web("#FF1744"));
+        crossIcon.setScaleX(0.8); crossIcon.setScaleY(0.8);
+
+        Label lowStockTitle = new Label();
+
+        if (lowStockProducts.isEmpty()) {
+            javafx.scene.layout.HBox titleRow = new javafx.scene.layout.HBox(8);
+            titleRow.setAlignment(Pos.CENTER_LEFT);
+            lowStockTitle.setText("Stock Status");
+            lowStockTitle.setStyle("-fx-font-size: 15px; -fx-font-weight: bold; -fx-text-fill: #388E3C;");
+            titleRow.getChildren().addAll(checkIcon, lowStockTitle);
+
+            Label noAlert = new Label("All products are well-stocked!");
+            noAlert.setStyle("-fx-font-size: 13px; -fx-text-fill: #4CAF50; -fx-font-weight: bold;");
+            lowStockPanel.setStyle("-fx-background-color: #F1F8E9; -fx-background-radius: 12; " +
+                "-fx-border-color: #4CAF50; -fx-border-radius: 12; -fx-border-width: 2; " +
+                "-fx-effect: dropshadow(three-pass-box, rgba(76,175,80,0.15), 8, 0, 0, 3);");
+            lowStockPanel.getChildren().addAll(titleRow, noAlert);
+        } else {
+            javafx.scene.layout.HBox titleRow = new javafx.scene.layout.HBox(8);
+            titleRow.setAlignment(Pos.CENTER_LEFT);
+            lowStockTitle.setText("Low Stock Alert (" + lowStockProducts.size() + " items)");
+            lowStockTitle.setStyle("-fx-font-size: 15px; -fx-font-weight: bold; -fx-text-fill: #D32F2F;");
+            titleRow.getChildren().addAll(crossIcon, lowStockTitle);
+
+            javafx.scene.control.TableView<com.pbl3.project.pbl3_project.entity.Product> lowStockTable = new javafx.scene.control.TableView<>();
+            lowStockTable.setColumnResizePolicy(javafx.scene.control.TableView.CONSTRAINED_RESIZE_POLICY);
+            lowStockTable.setMaxHeight(200);
+            lowStockTable.setStyle("-fx-background-color: transparent;");
+
+            javafx.scene.control.TableColumn<com.pbl3.project.pbl3_project.entity.Product, String> nameCol = new javafx.scene.control.TableColumn<>("Product Name");
+            nameCol.setCellValueFactory(data -> new javafx.beans.property.SimpleStringProperty(data.getValue().getName()));
+
+            javafx.scene.control.TableColumn<com.pbl3.project.pbl3_project.entity.Product, String> catCol = new javafx.scene.control.TableColumn<>("Category");
+            catCol.setCellValueFactory(data -> new javafx.beans.property.SimpleStringProperty(
+                data.getValue().getCategory() != null ? data.getValue().getCategory().getName() : "-"));
+
+            javafx.scene.control.TableColumn<com.pbl3.project.pbl3_project.entity.Product, Integer> qtyCol = new javafx.scene.control.TableColumn<>("Current Qty");
+            qtyCol.setCellValueFactory(new javafx.scene.control.cell.PropertyValueFactory<>("quantity"));
+            qtyCol.setStyle("-fx-alignment: CENTER;");
+            // Red text for quantity
+            qtyCol.setCellFactory(col -> new javafx.scene.control.TableCell<>() {
+                @Override protected void updateItem(Integer item, boolean empty) {
+                    super.updateItem(item, empty);
+                    if (empty || item == null) { setText(null); setStyle(""); }
+                    else { setText(String.valueOf(item)); setStyle("-fx-text-fill: #D32F2F; -fx-font-weight: bold; -fx-alignment: CENTER;"); }
+                }
+            });
+
+            javafx.scene.control.TableColumn<com.pbl3.project.pbl3_project.entity.Product, Integer> minCol = new javafx.scene.control.TableColumn<>("Min Level");
+            minCol.setCellValueFactory(new javafx.scene.control.cell.PropertyValueFactory<>("minStockLevel"));
+            minCol.setStyle("-fx-alignment: CENTER;");
+
+            lowStockTable.getColumns().addAll(nameCol, catCol, qtyCol, minCol);
+            lowStockTable.setItems(javafx.collections.FXCollections.observableArrayList(lowStockProducts));
+            
+            lowStockPanel.getChildren().addAll(titleRow, lowStockTable);
+        }
+        VBox.setVgrow(lowStockPanel, javafx.scene.layout.Priority.NEVER);
+
+        content.getChildren().addAll(statsRow, chartTitle, barChart, lowStockPanel);
         return content;
     }
     
@@ -660,7 +791,7 @@ public class StageInitializer implements ApplicationListener<StageReadyEvent> {
         return content;
     }
     
-    private javafx.scene.Node createSalesView(com.pbl3.project.pbl3_project.entity.User user) {
+    private javafx.scene.Node createSalesView(Stage stage, com.pbl3.project.pbl3_project.entity.User user) {
         javafx.scene.control.SplitPane splitPane = new javafx.scene.control.SplitPane();
         splitPane.setDividerPositions(0.65);
 
@@ -856,19 +987,37 @@ public class StageInitializer implements ApplicationListener<StageReadyEvent> {
         checkoutButton.setMaxWidth(Double.MAX_VALUE);
         checkoutButton.setOnAction(e -> {
             if (cartItems.isEmpty()) return;
-            try {
-                com.pbl3.project.pbl3_project.dto.CreateOrderRequest req = new com.pbl3.project.pbl3_project.dto.CreateOrderRequest();
-                req.setUserId(user.getId());
-                req.setItems(new java.util.ArrayList<>(cartItems));
-                orderService.createOrder(req);
-                toastService.showSuccess("Order created successfully!");
-                cartItems.clear();
-                allProducts.clear();
-                allProducts.addAll(productService.getAllProducts());
-                renderProducts.run();
-            } catch (Exception ex) {
-                toastService.showError("Order Failed: " + ex.getMessage());
-            }
+            
+            // Calculate total based on current product prices
+            double total = cartItems.stream().mapToDouble(item -> {
+                var p = allProducts.stream()
+                        .filter(prod -> prod.getId().equals(item.getProductId()))
+                        .findFirst()
+                        .orElse(null);
+                return p != null ? p.getPrice() * item.getQuantity() : 0.0;
+            }).sum();
+
+            showCheckoutDialog(stage, total, (method, printReceipt) -> {
+                try {
+                    com.pbl3.project.pbl3_project.dto.CreateOrderRequest req = new com.pbl3.project.pbl3_project.dto.CreateOrderRequest();
+                    req.setUserId(user.getId());
+                    req.setItems(new java.util.ArrayList<>(cartItems));
+                    req.setPaymentMethod(method);
+                    com.pbl3.project.pbl3_project.entity.Order newOrder = orderService.createOrder(req);
+                    
+                    if (printReceipt) {
+                        receiptService.generateAndOpenReceipt(newOrder);
+                    }
+                    
+                    toastService.showSuccess("Order Paid via " + method + "!");
+                    cartItems.clear();
+                    allProducts.clear();
+                    allProducts.addAll(productService.getAllProducts());
+                    renderProducts.run();
+                } catch (Exception ex) {
+                    toastService.showError("Order Failed: " + ex.getMessage());
+                }
+            });
         });
 
         rightBox.getChildren().addAll(rightTitle, cartTable, checkoutButton);
@@ -954,7 +1103,7 @@ public class StageInitializer implements ApplicationListener<StageReadyEvent> {
 
     private void updateSidebarState(javafx.scene.Parent root, String activeNavId) {
         // Find all nav buttons and update class
-        for (String id : new String[]{"nav-dashboard", "nav-products", "nav-sales", "nav-attributes", "nav-history"}) {
+        for (String id : new String[]{"nav-dashboard", "nav-products", "nav-import", "nav-sales", "nav-attributes", "nav-history", "nav-stock-history"}) {
             javafx.scene.Node btn = root.lookup("#" + id);
             if (btn != null) {
                 if (id.equals(activeNavId)) {
@@ -981,20 +1130,33 @@ public class StageInitializer implements ApplicationListener<StageReadyEvent> {
         
         Button navDashboard = createNavButton("Dashboard", "nav-dashboard", () -> showOverviewScene(stage, user));
         Button navProducts = createNavButton("Products", "nav-products", () -> showDashboardScene(stage, user));
+        Button navImport = createNavButton("Import Goods", "nav-import", () -> showImportOrderScene(stage, user));
         Button navSales = createNavButton("Sales (POS)", "nav-sales", () -> showSalesScene(stage, user));
         Button navAttributes = createNavButton("Master Data", "nav-attributes", () -> showAttributesScene(stage, user));
         Button navHistory = createNavButton("Order History", "nav-history", () -> showOrderHistoryScene(stage, user));
-        Button navLogout = createNavButton("Logout", "nav-logout", () -> showLoginScene(stage));
-        navLogout.setStyle("-fx-text-fill: #F44336; -fx-font-weight: bold;");
+        Button navStockHistory = createNavButton("Stock History", "nav-stock-history", () -> showStockHistoryScene(stage, user));
+        Button navLogout = new Button("Logout");
+        navLogout.setId("nav-logout");
+        navLogout.getStyleClass().clear();
+        navLogout.getStyleClass().add("nav-logout-btn");
+        navLogout.setOnAction(e -> showLoginScene(stage));
+        // Logout SVG icon (door with arrow - matching Figma)
+        javafx.scene.shape.SVGPath logoutIcon = new javafx.scene.shape.SVGPath();
+        logoutIcon.setContent("M10.09 15.59L11.5 17l5-5-5-5-1.41 1.41L12.67 11H3v2h9.67l-2.58 2.59zM19 3H5c-1.11 0-2 .9-2 2v4h2V5h14v14H5v-4H3v4c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2z");
+        logoutIcon.setFill(javafx.scene.paint.Color.web("#F44336"));
+        logoutIcon.setScaleX(0.7); logoutIcon.setScaleY(0.7);
+        navLogout.setGraphic(logoutIcon);
 
         // Initial Active State
         if ("nav-dashboard".equals(activeNavId)) navDashboard.getStyleClass().add("active");
         if ("nav-products".equals(activeNavId)) navProducts.getStyleClass().add("active");
+        if ("nav-import".equals(activeNavId)) navImport.getStyleClass().add("active");
         if ("nav-sales".equals(activeNavId)) navSales.getStyleClass().add("active");
         if ("nav-attributes".equals(activeNavId)) navAttributes.getStyleClass().add("active");
         if ("nav-history".equals(activeNavId)) navHistory.getStyleClass().add("active");
+        if ("nav-stock-history".equals(activeNavId)) navStockHistory.getStyleClass().add("active");
 
-        sidebar.getChildren().addAll(appTitle, navDashboard, navProducts, navSales, navAttributes, navHistory, new javafx.scene.control.Separator(), navLogout);
+        sidebar.getChildren().addAll(appTitle, navDashboard, navProducts, navImport, navSales, navAttributes, navHistory, navStockHistory, new javafx.scene.control.Separator(), navLogout);
         sidebar.setPadding(new Insets(15));
         
         // Clip sidebar content during animation (with rounded corners)
@@ -1090,7 +1252,7 @@ public class StageInitializer implements ApplicationListener<StageReadyEvent> {
         javafx.scene.layout.BorderPane.setMargin(sidebar, new Insets(15, 0, 15, 15));
         // Removed margin for centerContent to fix deselect dead zone
         
-        root.setStyle("-fx-background-color: #F5F5F5;");
+        root.setStyle("-fx-background-color: #ECEFF1;");
         
         return root;
     }
@@ -1133,7 +1295,7 @@ public class StageInitializer implements ApplicationListener<StageReadyEvent> {
     private void showLoginScene(Stage stage) {
         // UI Layout
         javafx.scene.layout.StackPane mainRoot = new javafx.scene.layout.StackPane();
-        mainRoot.setStyle("-fx-background-color: #F5F5F5;");
+        mainRoot.setStyle("-fx-background-color: #ECEFF1;");
 
         VBox loginBox = new VBox(15);
         loginBox.getStyleClass().add("login-box");
@@ -1154,24 +1316,120 @@ public class StageInitializer implements ApplicationListener<StageReadyEvent> {
         errorLabel.setAlignment(Pos.CENTER);
         errorLabel.setMaxWidth(Double.MAX_VALUE);
 
-        // Input Fields
+        // --- Floating label input fields ---
+        // Username
         TextField usernameField = new TextField();
-        usernameField.setPromptText("Username");
         usernameField.getStyleClass().add("text-field");
         usernameField.setMaxWidth(350);
-        
-        
+        usernameField.setPrefHeight(44);
+        usernameField.setStyle("-fx-border-color: #B0BEC5; -fx-border-width: 1.5; -fx-border-radius: 8; -fx-background-radius: 8; -fx-padding: 10 14; -fx-font-size: 14px; -fx-background-color: transparent; -fx-focus-color: transparent; -fx-faint-focus-color: transparent;");
+
+        Label usernameLabel = new Label("Username");
+        usernameLabel.setStyle("-fx-text-fill: #90A4AE; -fx-font-size: 14px; -fx-background-color: #ECEFF1; -fx-background-radius: 20; -fx-padding: 0 4 0 4;");
+        usernameLabel.setMouseTransparent(true);
+
+        javafx.scene.layout.StackPane usernamePane = new javafx.scene.layout.StackPane(usernameField, usernameLabel);
+        usernamePane.setMaxWidth(350);
+        javafx.scene.layout.StackPane.setAlignment(usernameLabel, Pos.CENTER_LEFT);
+        usernameLabel.setTranslateX(12);
+
+        javafx.animation.Timeline userAnimUp = new javafx.animation.Timeline(new javafx.animation.KeyFrame(javafx.util.Duration.millis(200),
+                new javafx.animation.KeyValue(usernameLabel.translateYProperty(), -22, javafx.animation.Interpolator.EASE_BOTH),
+                new javafx.animation.KeyValue(usernameLabel.translateXProperty(), 8, javafx.animation.Interpolator.EASE_BOTH),
+                new javafx.animation.KeyValue(usernameLabel.scaleXProperty(), 0.85, javafx.animation.Interpolator.EASE_BOTH),
+                new javafx.animation.KeyValue(usernameLabel.scaleYProperty(), 0.85, javafx.animation.Interpolator.EASE_BOTH)));
+        javafx.animation.Timeline userAnimDown = new javafx.animation.Timeline(new javafx.animation.KeyFrame(javafx.util.Duration.millis(200),
+                new javafx.animation.KeyValue(usernameLabel.translateYProperty(), 0, javafx.animation.Interpolator.EASE_BOTH),
+                new javafx.animation.KeyValue(usernameLabel.translateXProperty(), 12, javafx.animation.Interpolator.EASE_BOTH),
+                new javafx.animation.KeyValue(usernameLabel.scaleXProperty(), 1.0, javafx.animation.Interpolator.EASE_BOTH),
+                new javafx.animation.KeyValue(usernameLabel.scaleYProperty(), 1.0, javafx.animation.Interpolator.EASE_BOTH)));
+
+        Runnable updateUsernameState = () -> {
+            boolean focused = usernameField.isFocused();
+            boolean hasText = !usernameField.getText().isEmpty();
+            if (focused) {
+                userAnimDown.stop(); userAnimUp.play();
+                usernameLabel.setStyle("-fx-text-fill: #1976D2; -fx-font-size: 14px; -fx-background-color: #ECEFF1; -fx-background-radius: 20; -fx-padding: 0 4 0 4;");
+                usernameField.setStyle("-fx-border-color: #1976D2; -fx-border-width: 2; -fx-border-radius: 8; -fx-background-radius: 8; -fx-padding: 10 14; -fx-font-size: 14px; -fx-background-color: transparent; -fx-focus-color: transparent; -fx-faint-focus-color: transparent;");
+            } else if (hasText) {
+                userAnimDown.stop(); userAnimUp.play();
+                usernameLabel.setStyle("-fx-text-fill: #78909C; -fx-font-size: 14px; -fx-background-color: #ECEFF1; -fx-background-radius: 20; -fx-padding: 0 4 0 4;");
+                usernameField.setStyle("-fx-border-color: #B0BEC5; -fx-border-width: 1.5; -fx-border-radius: 8; -fx-background-radius: 8; -fx-padding: 10 14; -fx-font-size: 14px; -fx-background-color: transparent; -fx-focus-color: transparent; -fx-faint-focus-color: transparent;");
+            } else {
+                userAnimUp.stop(); userAnimDown.play();
+                usernameLabel.setStyle("-fx-text-fill: #90A4AE; -fx-font-size: 14px; -fx-background-color: transparent; -fx-padding: 0 4 0 4;");
+                usernameField.setStyle("-fx-border-color: #B0BEC5; -fx-border-width: 1.5; -fx-border-radius: 8; -fx-background-radius: 8; -fx-padding: 10 14; -fx-font-size: 14px; -fx-background-color: transparent; -fx-focus-color: transparent; -fx-faint-focus-color: transparent;");
+            }
+        };
+        usernameField.focusedProperty().addListener((obs, old, focused) -> updateUsernameState.run());
+        usernameField.textProperty().addListener((obs, old, val) -> updateUsernameState.run());
+
+        // Password
         PasswordField passwordField = new PasswordField();
-        passwordField.setPromptText("Password");
         passwordField.getStyleClass().add("text-field");
         passwordField.setMaxWidth(350);
+        passwordField.setPrefHeight(44);
+        passwordField.setStyle("-fx-border-color: #B0BEC5; -fx-border-width: 1.5; -fx-border-radius: 8; -fx-background-radius: 8; -fx-padding: 10 14; -fx-font-size: 14px; -fx-background-color: transparent; -fx-focus-color: transparent; -fx-faint-focus-color: transparent;");
+
+        Label passwordLabel = new Label("Password");
+        passwordLabel.setStyle("-fx-text-fill: #90A4AE; -fx-font-size: 14px; -fx-background-color: #ECEFF1; -fx-background-radius: 20; -fx-padding: 0 4 0 4;");
+        passwordLabel.setMouseTransparent(true);
+
+        javafx.scene.layout.StackPane passwordPane = new javafx.scene.layout.StackPane(passwordField, passwordLabel);
+        passwordPane.setMaxWidth(350);
+        javafx.scene.layout.StackPane.setAlignment(passwordLabel, Pos.CENTER_LEFT);
+        passwordLabel.setTranslateX(12);
+
+        javafx.animation.Timeline passAnimUp = new javafx.animation.Timeline(new javafx.animation.KeyFrame(javafx.util.Duration.millis(200),
+                new javafx.animation.KeyValue(passwordLabel.translateYProperty(), -22, javafx.animation.Interpolator.EASE_BOTH),
+                new javafx.animation.KeyValue(passwordLabel.translateXProperty(), 8, javafx.animation.Interpolator.EASE_BOTH),
+                new javafx.animation.KeyValue(passwordLabel.scaleXProperty(), 0.85, javafx.animation.Interpolator.EASE_BOTH),
+                new javafx.animation.KeyValue(passwordLabel.scaleYProperty(), 0.85, javafx.animation.Interpolator.EASE_BOTH)));
+        javafx.animation.Timeline passAnimDown = new javafx.animation.Timeline(new javafx.animation.KeyFrame(javafx.util.Duration.millis(200),
+                new javafx.animation.KeyValue(passwordLabel.translateYProperty(), 0, javafx.animation.Interpolator.EASE_BOTH),
+                new javafx.animation.KeyValue(passwordLabel.translateXProperty(), 12, javafx.animation.Interpolator.EASE_BOTH),
+                new javafx.animation.KeyValue(passwordLabel.scaleXProperty(), 1.0, javafx.animation.Interpolator.EASE_BOTH),
+                new javafx.animation.KeyValue(passwordLabel.scaleYProperty(), 1.0, javafx.animation.Interpolator.EASE_BOTH)));
+
+        Runnable updatePasswordState = () -> {
+            boolean focused = passwordField.isFocused();
+            boolean hasText = !passwordField.getText().isEmpty();
+            if (focused) {
+                passAnimDown.stop(); passAnimUp.play();
+                passwordLabel.setStyle("-fx-text-fill: #1976D2; -fx-font-size: 14px; -fx-background-color: #ECEFF1; -fx-background-radius: 20; -fx-padding: 0 4 0 4;");
+                passwordField.setStyle("-fx-border-color: #1976D2; -fx-border-width: 2; -fx-border-radius: 8; -fx-background-radius: 8; -fx-padding: 10 14; -fx-font-size: 14px; -fx-background-color: transparent; -fx-focus-color: transparent; -fx-faint-focus-color: transparent;");
+            } else if (hasText) {
+                passAnimDown.stop(); passAnimUp.play();
+                passwordLabel.setStyle("-fx-text-fill: #78909C; -fx-font-size: 14px; -fx-background-color: #ECEFF1; -fx-background-radius: 20; -fx-padding: 0 4 0 4;");
+                passwordField.setStyle("-fx-border-color: #B0BEC5; -fx-border-width: 1.5; -fx-border-radius: 8; -fx-background-radius: 8; -fx-padding: 10 14; -fx-font-size: 14px; -fx-background-color: transparent; -fx-focus-color: transparent; -fx-faint-focus-color: transparent;");
+            } else {
+                passAnimUp.stop(); passAnimDown.play();
+                passwordLabel.setStyle("-fx-text-fill: #90A4AE; -fx-font-size: 14px; -fx-background-color: transparent; -fx-padding: 0 4 0 4;");
+                passwordField.setStyle("-fx-border-color: #B0BEC5; -fx-border-width: 1.5; -fx-border-radius: 8; -fx-background-radius: 8; -fx-padding: 10 14; -fx-font-size: 14px; -fx-background-color: transparent; -fx-focus-color: transparent; -fx-faint-focus-color: transparent;");
+            }
+        };
+        passwordField.focusedProperty().addListener((obs, old, focused) -> updatePasswordState.run());
+        passwordField.textProperty().addListener((obs, old, val) -> updatePasswordState.run());
 
         // Login Button
         Button loginButton = new Button("LOGIN");
         loginButton.getStyleClass().addAll("button", "primary-button");
         loginButton.setMaxWidth(350);
         loginButton.setDefaultButton(true);
+        loginButton.setCursor(javafx.scene.Cursor.HAND);
         
+        // Button Click Animation
+        loginButton.setOnMousePressed(e -> {
+            ScaleTransition st = new ScaleTransition(Duration.millis(100), loginButton);
+            st.setToX(0.95); st.setToY(0.95);
+            st.play();
+        });
+        loginButton.setOnMouseReleased(e -> {
+            ScaleTransition st = new ScaleTransition(Duration.millis(100), loginButton);
+            st.setToX(1.0); st.setToY(1.0);
+            st.play();
+        });
+
         loginButton.setOnAction(e -> {
             String username = usernameField.getText();
             String password = passwordField.getText();
@@ -1181,10 +1439,17 @@ public class StageInitializer implements ApplicationListener<StageReadyEvent> {
                 showOverviewScene(stage, user);
             } else {
                 errorLabel.setText("Invalid credentials!");
+                
+                // Shake Animation
+                TranslateTransition shake = new TranslateTransition(Duration.millis(50), loginBox);
+                shake.setByX(10f);
+                shake.setCycleCount(6);
+                shake.setAutoReverse(true);
+                shake.playFromStart();
             }
         });
 
-        loginBox.getChildren().addAll(titleLabel, errorLabel, usernameField, passwordField, loginButton);
+        loginBox.getChildren().addAll(titleLabel, errorLabel, usernamePane, passwordPane, loginButton);
         mainRoot.getChildren().add(loginBox);
 
         Scene scene = new Scene(mainRoot, 450, 350); // Wider window
@@ -1194,7 +1459,7 @@ public class StageInitializer implements ApplicationListener<StageReadyEvent> {
     }
 
 
-    private void showProductDialog(Stage owner, com.pbl3.project.pbl3_project.entity.Product product, com.pbl3.project.pbl3_project.entity.Category contextCategory, Runnable onSave) {
+    private void showProductDialog(Stage owner, com.pbl3.project.pbl3_project.entity.Product product, com.pbl3.project.pbl3_project.entity.Category contextCategory, com.pbl3.project.pbl3_project.entity.User user, Runnable onSave) {
         try {
             Stage dialog = new Stage();
             dialog.initOwner(owner);
@@ -1236,45 +1501,45 @@ public class StageInitializer implements ApplicationListener<StageReadyEvent> {
             TextField priceField = createStyledTextField(product != null ? String.valueOf(product.getPrice()) : "", "Selling Price *");
             TextField qtyField = createStyledTextField(product != null ? String.valueOf(product.getQuantity()) : "0", "Quantity *");
 
+            // Disable import price editing for existing products to enforce "Import Goods" workflow
+            if (product != null) {
+                importPriceField.setDisable(true);
+            }
+
             grid.add(createFormLabel("Import Price"), 0, 2); grid.add(importPriceField, 1, 2);
             grid.add(createFormLabel("Selling Price *"), 2, 2); grid.add(priceField, 3, 2);
             grid.add(createFormLabel("Quantity *"), 0, 3); grid.add(qtyField, 1, 3);
 
-            // Row 3: Master Data (Brand, Supplier)
+            // Row 3: Master Data (Brand, Origin)
             javafx.scene.control.ComboBox<com.pbl3.project.pbl3_project.entity.Brand> brandCombo = new javafx.scene.control.ComboBox<>();
             brandCombo.setMaxWidth(Double.MAX_VALUE); brandCombo.setPromptText("Select Brand");
             brandCombo.setItems(javafx.collections.FXCollections.observableArrayList(brandService.getAllBrands()));
             setComboConverter(brandCombo);
             if (product != null) brandCombo.setValue(product.getBrand());
 
-            javafx.scene.control.ComboBox<com.pbl3.project.pbl3_project.entity.Supplier> supplierCombo = new javafx.scene.control.ComboBox<>();
-            supplierCombo.setMaxWidth(Double.MAX_VALUE); supplierCombo.setPromptText("Select Supplier");
-            supplierCombo.setItems(javafx.collections.FXCollections.observableArrayList(supplierService.getAllSuppliers()));
-            setComboConverter(supplierCombo);
-            if (product != null) supplierCombo.setValue(product.getSupplier());
-            
-            grid.add(createFormLabel("Brand"), 2, 3); grid.add(brandCombo, 3, 3);
-            grid.add(createFormLabel("Supplier"), 0, 4); grid.add(supplierCombo, 1, 4);
-
-            // Row 4: Master Data (Origin, Unit)
             javafx.scene.control.ComboBox<com.pbl3.project.pbl3_project.entity.Origin> originCombo = new javafx.scene.control.ComboBox<>();
             originCombo.setMaxWidth(Double.MAX_VALUE); originCombo.setPromptText("Select Origin");
             originCombo.setItems(javafx.collections.FXCollections.observableArrayList(originService.getAllOrigins()));
             setComboConverter(originCombo);
             if (product != null) originCombo.setValue(product.getOrigin());
+            
+            grid.add(createFormLabel("Brand"), 2, 3); grid.add(brandCombo, 3, 3);
+            grid.add(createFormLabel("Origin"), 0, 4); grid.add(originCombo, 1, 4);
 
+            // Row 4: Master Data (Unit, Description)
             javafx.scene.control.ComboBox<com.pbl3.project.pbl3_project.entity.Unit> unitCombo = new javafx.scene.control.ComboBox<>();
             unitCombo.setMaxWidth(Double.MAX_VALUE); unitCombo.setPromptText("Select Unit");
             unitCombo.setItems(javafx.collections.FXCollections.observableArrayList(unitService.getAllUnits()));
             setComboConverter(unitCombo);
             if (product != null) unitCombo.setValue(product.getUnit());
 
-            grid.add(createFormLabel("Origin"), 2, 4); grid.add(originCombo, 3, 4);
-            grid.add(createFormLabel("Unit"), 0, 5); grid.add(unitCombo, 1, 5);
+            grid.add(createFormLabel("Unit"), 2, 4); grid.add(unitCombo, 3, 4);
             
-            // Description (Spans 2 columns)
+            // Description and Min Stock Level
             TextField descField = createStyledTextField(product != null ? product.getDescription() : "", "Description");
-            grid.add(createFormLabel("Description"), 2, 5); grid.add(descField, 3, 5);
+            TextField minStockField = createStyledTextField(product != null && product.getMinStockLevel() != null ? String.valueOf(product.getMinStockLevel()) : "10", "Min Stock Level");
+            grid.add(createFormLabel("Description"), 0, 5); grid.add(descField, 1, 5);
+            grid.add(createFormLabel("Min Stock"), 2, 5); grid.add(minStockField, 3, 5);
 
             // --- Action Buttons ---
             Button saveButton = new Button("SAVE PRODUCT");
@@ -1289,12 +1554,35 @@ public class StageInitializer implements ApplicationListener<StageReadyEvent> {
                        return;
                     }
 
+                    int newQty = Integer.parseInt(qtyField.getText());
+                    String reason = "Manual Add/Edit via UI";
+                    
+                    if (product != null && product.getQuantity() != newQty) {
+                        javafx.scene.control.TextInputDialog reasonDialog = new javafx.scene.control.TextInputDialog();
+                        reasonDialog.setTitle("Stock Edit Reason");
+                        reasonDialog.setHeaderText("Quantity changed: " + product.getQuantity() + " -> " + newQty);
+                        reasonDialog.setContentText("Please enter a reason for audit log:");
+                        
+                        // Apply custom application styling
+                        reasonDialog.getDialogPane().getStylesheets().add(getClass().getResource("/application.css").toExternalForm());
+                        reasonDialog.getDialogPane().getStyleClass().add("dialog-root");
+                        
+                        java.util.Optional<String> result = reasonDialog.showAndWait();
+                        if (result.isPresent() && !result.get().trim().isEmpty()) {
+                            reason = result.get().trim();
+                        } else {
+                            toastService.showError("Change reason is required to update stock!");
+                            return;
+                        }
+                    }
+
                     p.setName(nameField.getText());
                     p.setSku(skuField.getText());
                     p.setBarcode(barcodeField.getText());
                     p.setDescription(descField.getText());
                     p.setPrice(Double.parseDouble(priceField.getText()));
-                    p.setQuantity(Integer.parseInt(qtyField.getText()));
+                    p.setQuantity(newQty);
+                    try { p.setMinStockLevel(Integer.parseInt(minStockField.getText())); } catch (NumberFormatException ex) { p.setMinStockLevel(10); }
                     
                     String importPriceTxt = importPriceField.getText();
                     if (!importPriceTxt.isEmpty()) p.setImportPrice(Double.parseDouble(importPriceTxt));
@@ -1307,11 +1595,10 @@ public class StageInitializer implements ApplicationListener<StageReadyEvent> {
                     }
                     
                     p.setBrand(brandCombo.getValue());
-                    p.setSupplier(supplierCombo.getValue());
                     p.setOrigin(originCombo.getValue());
                     p.setUnit(unitCombo.getValue());
 
-                    productService.saveProduct(p);
+                    productService.saveProduct(p, user, reason);
                     toastService.showSuccess("Product saved successfully!");
                     onSave.run();
                     dialog.close();
@@ -1507,5 +1794,379 @@ public class StageInitializer implements ApplicationListener<StageReadyEvent> {
             default -> toastService.showInfo(content);
         }
     }
-}
+    private void showCheckoutDialog(Stage owner, double totalAmount, java.util.function.BiConsumer<com.pbl3.project.pbl3_project.entity.PaymentMethod, Boolean> onConfirm) {
+        Stage dialog = new Stage();
+        dialog.initOwner(owner);
+        dialog.initModality(javafx.stage.Modality.APPLICATION_MODAL);
+        dialog.setTitle("Checkout");
 
+        VBox root = new VBox(20);
+        root.setPadding(new Insets(30));
+        root.setAlignment(Pos.CENTER);
+        root.setStyle("-fx-background-color: white;");
+
+        Label title = new Label("Payment");
+        title.setStyle("-fx-font-size: 24px; -fx-font-weight: bold; -fx-text-fill: #37474F;");
+
+        Label totalLbl = new Label(String.format("Total to Pay: $%.2f", totalAmount));
+        totalLbl.setStyle("-fx-font-size: 18px; -fx-text-fill: #D32F2F; -fx-font-weight: bold;");
+
+        // Payment Method
+        javafx.scene.control.ComboBox<com.pbl3.project.pbl3_project.entity.PaymentMethod> methodCombo = new javafx.scene.control.ComboBox<>();
+        methodCombo.getItems().addAll(com.pbl3.project.pbl3_project.entity.PaymentMethod.values());
+        methodCombo.setValue(com.pbl3.project.pbl3_project.entity.PaymentMethod.CASH);
+        methodCombo.setStyle("-fx-font-size: 14px; -fx-pref-width: 250px;");
+
+        // Cash Input
+        VBox cashBox = new VBox(10);
+        cashBox.setAlignment(Pos.CENTER_LEFT);
+        TextField givenField = new TextField();
+        givenField.setPromptText("Amount Given");
+        givenField.setStyle("-fx-font-size: 14px; -fx-pref-width: 250px;");
+        
+        Label changeLbl = new Label("Change: $0.00");
+        changeLbl.setStyle("-fx-font-size: 16px; -fx-text-fill: #388E3C; -fx-font-weight: bold;");
+
+        cashBox.getChildren().addAll(new Label("Amount Given:"), givenField, changeLbl);
+
+    javafx.scene.control.CheckBox printReceiptCb = new javafx.scene.control.CheckBox("Print Receipt (PDF)");
+    printReceiptCb.setSelected(true);
+    printReceiptCb.setStyle("-fx-font-size: 14px; -fx-text-fill: #37474F;");
+
+    Button confirmBtn = new Button("PAY & PRINT");
+        confirmBtn.getStyleClass().addAll("button", "success-button");
+        confirmBtn.setDisable(true);
+        confirmBtn.setPrefWidth(250);
+
+        // Logic
+        Runnable updateState = () -> {
+             boolean isCash = methodCombo.getValue() == com.pbl3.project.pbl3_project.entity.PaymentMethod.CASH;
+             cashBox.setVisible(isCash);
+             cashBox.setManaged(isCash);
+             if (!isCash) {
+                 confirmBtn.setDisable(false);
+             } else {
+                 try {
+                     double given = Double.parseDouble(givenField.getText());
+                     if (given >= totalAmount) confirmBtn.setDisable(false);
+                     else confirmBtn.setDisable(true);
+                 } catch (Exception e) {
+                     confirmBtn.setDisable(true);
+                 }
+             }
+        };
+
+        methodCombo.setOnAction(e -> updateState.run());
+
+        // Validation
+        givenField.textProperty().addListener((obs, old, val) -> {
+            try {
+                double given = Double.parseDouble(val);
+                double change = given - totalAmount;
+                changeLbl.setText(String.format("Change: $%.2f", change));
+                if (change >= 0) {
+                    confirmBtn.setDisable(false);
+                    changeLbl.setStyle("-fx-font-size: 16px; -fx-text-fill: #388E3C; -fx-font-weight: bold;");
+                } else {
+                    confirmBtn.setDisable(true);
+                    changeLbl.setStyle("-fx-font-size: 16px; -fx-text-fill: #D32F2F; -fx-font-weight: bold;");
+                }
+            } catch (NumberFormatException e) {
+                confirmBtn.setDisable(true);
+                changeLbl.setText("Invalid Amount");
+            }
+        });
+
+        // Initialize state
+        updateState.run();
+
+        confirmBtn.setOnAction(e -> {
+            onConfirm.accept(methodCombo.getValue(), printReceiptCb.isSelected());
+            dialog.close();
+        });
+        
+        Button cancelBtn = new Button("CANCEL");
+        cancelBtn.getStyleClass().add("button");
+        cancelBtn.setStyle("-fx-background-color: #CFD8DC; -fx-text-fill: #37474F;");
+        cancelBtn.setPrefWidth(250);
+        cancelBtn.setOnAction(e -> dialog.close());
+
+        root.getChildren().addAll(title, totalLbl, methodCombo, cashBox, printReceiptCb, confirmBtn, cancelBtn);
+
+        Scene scene = new Scene(root, 400, 500);
+        if (owner.getScene() != null) {
+            scene.getStylesheets().addAll(owner.getScene().getStylesheets());
+        }
+        dialog.setScene(scene);
+        dialog.showAndWait();
+    }
+
+    private javafx.scene.layout.VBox createImportOrderView(Stage stage, com.pbl3.project.pbl3_project.entity.User user) {
+        VBox root = new VBox(20);
+        root.setPadding(new Insets(35));
+        root.setStyle("-fx-background-color: transparent;");
+
+        // Toolbar
+        javafx.scene.layout.BorderPane toolbar = new javafx.scene.layout.BorderPane();
+        Label title = new Label("Import Orders");
+        title.setStyle("-fx-font-size: 24px; -fx-font-weight: bold; -fx-text-fill: #37474F;");
+
+        Button createBtn = new Button("+ New Import");
+        createBtn.getStyleClass().addAll("button", "success-button");
+        createBtn.setOnAction(e -> showCreateImportDialog(stage, user, () -> {
+            // Refresh table
+            // TO DO: Implement refresh
+        }));
+
+        toolbar.setLeft(title);
+        toolbar.setRight(createBtn);
+
+        // Table
+        javafx.scene.control.TableView<com.pbl3.project.pbl3_project.entity.ImportOrder> table = new javafx.scene.control.TableView<>();
+        table.setColumnResizePolicy(javafx.scene.control.TableView.CONSTRAINED_RESIZE_POLICY);
+        
+        javafx.scene.control.TableColumn<com.pbl3.project.pbl3_project.entity.ImportOrder, String> idCol = new javafx.scene.control.TableColumn<>("ID");
+        idCol.setCellValueFactory(data -> new javafx.beans.property.SimpleStringProperty("IMP-" + data.getValue().getId()));
+        
+        javafx.scene.control.TableColumn<com.pbl3.project.pbl3_project.entity.ImportOrder, String> suppCol = new javafx.scene.control.TableColumn<>("Supplier");
+        suppCol.setCellValueFactory(data -> new javafx.beans.property.SimpleStringProperty(data.getValue().getSupplier().getName()));
+        
+        javafx.scene.control.TableColumn<com.pbl3.project.pbl3_project.entity.ImportOrder, String> dateCol = new javafx.scene.control.TableColumn<>("Date");
+        dateCol.setCellValueFactory(data -> new javafx.beans.property.SimpleStringProperty(data.getValue().getCreatedAt().format(java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm"))));
+        
+        javafx.scene.control.TableColumn<com.pbl3.project.pbl3_project.entity.ImportOrder, String> costCol = new javafx.scene.control.TableColumn<>("Total Cost");
+        costCol.setCellValueFactory(data -> new javafx.beans.property.SimpleStringProperty(String.format("%,.0f VND", data.getValue().getTotalCost())));
+
+        table.getColumns().addAll(idCol, suppCol, dateCol, costCol);
+        
+        Runnable loadData = () -> {
+            table.getItems().clear();
+            table.getItems().addAll(importOrderService.getAllImportOrders());
+        };
+        loadData.run();
+
+        root.getChildren().addAll(toolbar, table);
+        VBox.setVgrow(table, javafx.scene.layout.Priority.ALWAYS);
+        return root;
+    }
+
+    private void showCreateImportDialog(Stage owner, com.pbl3.project.pbl3_project.entity.User user, Runnable onSuccess) {
+        Stage dialog = new Stage();
+        dialog.initOwner(owner);
+        dialog.initModality(javafx.stage.Modality.APPLICATION_MODAL);
+        dialog.setTitle("New Import Order");
+
+        VBox root = new VBox(15);
+        root.setPadding(new Insets(25));
+        root.setPrefWidth(900);
+        root.setPrefHeight(600);
+        root.setStyle("-fx-background-color: white;");
+
+        // Top: Supplier
+        javafx.scene.layout.HBox topBox = new javafx.scene.layout.HBox(10);
+        topBox.setAlignment(Pos.CENTER_LEFT);
+        Label suppLbl = new Label("Select Supplier:");
+        suppLbl.setStyle("-fx-font-weight: bold;");
+        javafx.scene.control.ComboBox<com.pbl3.project.pbl3_project.entity.Supplier> supplierCombo = new javafx.scene.control.ComboBox<>();
+        supplierCombo.setPrefWidth(300);
+        supplierCombo.setConverter(new javafx.util.StringConverter<>() {
+            @Override public String toString(com.pbl3.project.pbl3_project.entity.Supplier s) { return s == null ? "" : s.getName(); }
+            @Override public com.pbl3.project.pbl3_project.entity.Supplier fromString(String s) { return null; }
+        });
+        supplierCombo.getItems().addAll(supplierService.getAllSuppliers());
+        topBox.getChildren().addAll(suppLbl, supplierCombo);
+
+        class TempItem {
+            com.pbl3.project.pbl3_project.entity.Product product;
+            int quantity;
+            double importPrice;
+            TempItem(com.pbl3.project.pbl3_project.entity.Product p, int q, double ip) { this.product=p; this.quantity=q; this.importPrice=ip; }
+            public double getTotal() { return quantity * importPrice; }
+        }
+
+        javafx.scene.control.TableView<TempItem> table = new javafx.scene.control.TableView<>();
+        Label totalLabel = new Label("Total Cost: 0 VND");
+        totalLabel.setStyle("-fx-font-size: 20px; -fx-font-weight: bold; -fx-text-fill: #D32F2F;");
+
+        Runnable updateTotalAction = () -> {
+            double t = table.getItems().stream().mapToDouble(TempItem::getTotal).sum();
+            totalLabel.setText(String.format("Total Cost: %,.0f VND", t));
+        };
+
+        javafx.scene.control.TableColumn<TempItem, String> nameCol = new javafx.scene.control.TableColumn<>("Product");
+        nameCol.setCellValueFactory(data -> new javafx.beans.property.SimpleStringProperty(data.getValue().product.getName()));
+        
+        javafx.scene.control.TableColumn<TempItem, Integer> qtyCol = new javafx.scene.control.TableColumn<>("Qty");
+        qtyCol.setCellValueFactory(data -> new javafx.beans.property.SimpleObjectProperty<>(data.getValue().quantity));
+        
+        javafx.scene.control.TableColumn<TempItem, String> priceCol = new javafx.scene.control.TableColumn<>("Unit Price");
+        priceCol.setCellValueFactory(data -> new javafx.beans.property.SimpleStringProperty(String.format("%,.0f VND", data.getValue().importPrice)));
+
+        javafx.scene.control.TableColumn<TempItem, String> totalCol = new javafx.scene.control.TableColumn<>("Total");
+        totalCol.setCellValueFactory(data -> new javafx.beans.property.SimpleStringProperty(String.format("%,.0f VND", data.getValue().getTotal())));
+
+        javafx.scene.control.TableColumn<TempItem, Void> actionCol = new javafx.scene.control.TableColumn<>("Action");
+        actionCol.setCellFactory(param -> new javafx.scene.control.TableCell<>() {
+            private final Button btn = new Button("Remove");
+            {
+                btn.getStyleClass().addAll("button", "danger-button");
+                btn.setOnAction(e -> {
+                    TempItem item = getTableView().getItems().get(getIndex());
+                    table.getItems().remove(item);
+                    updateTotalAction.run();
+                });
+            }
+            @Override protected void updateItem(Void item, boolean empty) {
+                super.updateItem(item, empty);
+                setGraphic(empty ? null : btn);
+            }
+        });
+        table.getColumns().addAll(nameCol, qtyCol, priceCol, totalCol, actionCol);
+        table.setColumnResizePolicy(javafx.scene.control.TableView.CONSTRAINED_RESIZE_POLICY);
+
+        // Add Item Form
+        javafx.scene.layout.HBox addBox = new javafx.scene.layout.HBox(10);
+        addBox.setAlignment(Pos.CENTER_LEFT);
+        
+        javafx.scene.control.ComboBox<com.pbl3.project.pbl3_project.entity.Product> productCombo = new javafx.scene.control.ComboBox<>();
+        productCombo.setPrefWidth(250);
+        productCombo.setPromptText("Select Product");
+        productCombo.setConverter(new javafx.util.StringConverter<>() {
+            @Override public String toString(com.pbl3.project.pbl3_project.entity.Product p) { return p == null ? "" : p.getName() + " (Stock: " + p.getQuantity() + ")"; }
+            @Override public com.pbl3.project.pbl3_project.entity.Product fromString(String string) { return null; }
+        });
+        productCombo.getItems().addAll(productService.getAllProducts());
+
+        TextField qtyField = new TextField(); qtyField.setPromptText("Quantity"); qtyField.setPrefWidth(100);
+        TextField priceField = new TextField(); priceField.setPromptText("Import Price"); priceField.setPrefWidth(120);
+
+        productCombo.setOnAction(e -> {
+            com.pbl3.project.pbl3_project.entity.Product p = productCombo.getValue();
+            if (p != null && p.getImportPrice() != null) priceField.setText(String.valueOf(p.getImportPrice()));
+        });
+
+        Button addBtn = new Button("Add Item");
+        addBtn.getStyleClass().addAll("button", "secondary-button");
+        addBtn.setOnAction(e -> {
+            com.pbl3.project.pbl3_project.entity.Product p = productCombo.getValue();
+            if (p == null) { toastService.showWarning("Select a product"); return; }
+            try {
+                int q = Integer.parseInt(qtyField.getText());
+                double pr = Double.parseDouble(priceField.getText());
+                if (q <= 0 || pr < 0) throw new NumberFormatException();
+                table.getItems().add(new TempItem(p, q, pr));
+                updateTotalAction.run();
+                productCombo.setValue(null); qtyField.clear(); priceField.clear();
+            } catch (Exception ex) {
+                toastService.showError("Invalid quantity or price");
+            }
+        });
+        addBox.getChildren().addAll(productCombo, qtyField, priceField, addBtn);
+
+        // Bottom Actions
+        javafx.scene.layout.HBox actionBox = new javafx.scene.layout.HBox(15);
+        actionBox.setAlignment(Pos.CENTER_RIGHT);
+        
+        Button cancelBtn = new Button("Cancel");
+        cancelBtn.getStyleClass().add("button");
+        cancelBtn.setOnAction(e -> dialog.close());
+
+        Button confirmBtn = new Button("Confirm Import");
+        confirmBtn.getStyleClass().addAll("button", "success-button");
+        confirmBtn.setOnAction(e -> {
+            if (supplierCombo.getValue() == null) { toastService.showWarning("Select a supplier!"); return; }
+            if (table.getItems().isEmpty()) { toastService.showWarning("Add at least one product!"); return; }
+            try {
+                com.pbl3.project.pbl3_project.dto.CreateImportOrderRequest req = new com.pbl3.project.pbl3_project.dto.CreateImportOrderRequest();
+                req.setUserId(user.getId());
+                req.setSupplierId(supplierCombo.getValue().getId());
+                req.setNotes("Import via UI");
+                java.util.List<com.pbl3.project.pbl3_project.dto.CreateImportOrderRequest.ImportOrderItemRequest> items = new java.util.ArrayList<>();
+                for (TempItem ti : table.getItems()) {
+                    var itReq = new com.pbl3.project.pbl3_project.dto.CreateImportOrderRequest.ImportOrderItemRequest();
+                    itReq.setProductId(ti.product.getId());
+                    itReq.setQuantity(ti.quantity);
+                    itReq.setImportPrice(ti.importPrice);
+                    items.add(itReq);
+                }
+                req.setItems(items);
+                importOrderService.createImportOrder(req);
+                toastService.showSuccess("Import Order Created!");
+                onSuccess.run();
+                dialog.close();
+            } catch (Exception ex) {
+                toastService.showError("Failed: " + ex.getMessage());
+            }
+        });
+
+        actionBox.getChildren().addAll(totalLabel, new javafx.scene.layout.Region(), cancelBtn, confirmBtn);
+        javafx.scene.layout.HBox.setHgrow(actionBox.getChildren().get(1), javafx.scene.layout.Priority.ALWAYS);
+
+        root.getChildren().addAll(topBox, addBox, table, actionBox);
+        VBox.setVgrow(table, javafx.scene.layout.Priority.ALWAYS);
+        
+        Scene scene = new Scene(root);
+        if (owner.getScene() != null) scene.getStylesheets().addAll(owner.getScene().getStylesheets());
+        dialog.setScene(scene);
+        dialog.showAndWait();
+    }
+
+    private void showStockHistoryScene(Stage stage, com.pbl3.project.pbl3_project.entity.User user) {
+        VBox content = createStockHistoryView(stage, user);
+        switchScene(stage, user, "Stock History", "nav-stock-history", content);
+    }
+
+    private VBox createStockHistoryView(Stage stage, com.pbl3.project.pbl3_project.entity.User user) {
+        VBox root = new VBox(20);
+        root.setPadding(new Insets(20));
+
+        Label header = new Label("Inventory Transactions Log");
+        header.getStyleClass().add("header-label");
+
+        javafx.scene.control.TableView<com.pbl3.project.pbl3_project.entity.InventoryTransaction> table = new javafx.scene.control.TableView<>();
+
+        javafx.scene.control.TableColumn<com.pbl3.project.pbl3_project.entity.InventoryTransaction, String> dateCol = new javafx.scene.control.TableColumn<>("Date");
+        dateCol.setCellValueFactory(data -> {
+            java.time.LocalDateTime dt = data.getValue().getCreatedAt();
+            java.time.format.DateTimeFormatter formatter = java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
+            return new javafx.beans.property.SimpleStringProperty(dt != null ? dt.format(formatter) : "");
+        });
+
+        javafx.scene.control.TableColumn<com.pbl3.project.pbl3_project.entity.InventoryTransaction, String> typeCol = new javafx.scene.control.TableColumn<>("Type");
+        typeCol.setCellValueFactory(data -> new javafx.beans.property.SimpleStringProperty(data.getValue().getTransactionType()));
+
+        javafx.scene.control.TableColumn<com.pbl3.project.pbl3_project.entity.InventoryTransaction, String> productCol = new javafx.scene.control.TableColumn<>("Product");
+        productCol.setCellValueFactory(data -> new javafx.beans.property.SimpleStringProperty(
+                data.getValue().getProduct() != null ? data.getValue().getProduct().getName() : "Unknown"
+        ));
+
+        javafx.scene.control.TableColumn<com.pbl3.project.pbl3_project.entity.InventoryTransaction, String> qtyCol = new javafx.scene.control.TableColumn<>("Change");
+        qtyCol.setCellValueFactory(data -> {
+            Integer changeParam = data.getValue().getQuantityChange();
+            int change = changeParam != null ? changeParam : 0;
+            String prefix = change > 0 ? "+" : "";
+            return new javafx.beans.property.SimpleStringProperty(prefix + change);
+        });
+        qtyCol.setStyle("-fx-alignment: CENTER; -fx-font-weight: bold;");
+
+        javafx.scene.control.TableColumn<com.pbl3.project.pbl3_project.entity.InventoryTransaction, String> userCol = new javafx.scene.control.TableColumn<>("User");
+        userCol.setCellValueFactory(data -> new javafx.beans.property.SimpleStringProperty(
+                data.getValue().getUser() != null ? data.getValue().getUser().getUsername() : "System"
+        ));
+
+        javafx.scene.control.TableColumn<com.pbl3.project.pbl3_project.entity.InventoryTransaction, String> notesCol = new javafx.scene.control.TableColumn<>("Notes/Ref");
+        notesCol.setCellValueFactory(data -> new javafx.beans.property.SimpleStringProperty(data.getValue().getNotes()));
+
+        table.getColumns().addAll(dateCol, typeCol, productCol, qtyCol, userCol, notesCol);
+        table.setColumnResizePolicy(javafx.scene.control.TableView.CONSTRAINED_RESIZE_POLICY);
+
+        // Load Data
+        java.util.List<com.pbl3.project.pbl3_project.entity.InventoryTransaction> txs = transactionService.getAllTransactions();
+        table.getItems().addAll(txs);
+
+        root.getChildren().addAll(header, table);
+        VBox.setVgrow(table, javafx.scene.layout.Priority.ALWAYS);
+
+        return root;
+    }
+}

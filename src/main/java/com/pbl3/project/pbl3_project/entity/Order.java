@@ -21,16 +21,21 @@ public class Order {
     @JoinColumn(name = "user_id")
     private User user;
 
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private PaymentMethod paymentMethod;
+
     @OneToMany(mappedBy = "order", cascade = CascadeType.ALL)
     private List<OrderItem> orderItems;
 
     public Order() {}
 
-    public Order(Long id, LocalDateTime createdAt, Double totalPrice, User user, List<OrderItem> orderItems) {
+    public Order(Long id, LocalDateTime createdAt, Double totalPrice, User user, PaymentMethod paymentMethod, List<OrderItem> orderItems) {
         this.id = id;
         this.createdAt = createdAt;
         this.totalPrice = totalPrice;
         this.user = user;
+        this.paymentMethod = paymentMethod;
         this.orderItems = orderItems;
     }
 
@@ -45,6 +50,9 @@ public class Order {
 
     public User getUser() { return user; }
     public void setUser(User user) { this.user = user; }
+
+    public PaymentMethod getPaymentMethod() { return paymentMethod; }
+    public void setPaymentMethod(PaymentMethod paymentMethod) { this.paymentMethod = paymentMethod; }
 
     public List<OrderItem> getOrderItems() { return orderItems; }
     public void setOrderItems(List<OrderItem> orderItems) { this.orderItems = orderItems; }

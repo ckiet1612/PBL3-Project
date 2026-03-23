@@ -10,4 +10,11 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
     
     // Count products with quantity below threshold (low stock)
     long countByQuantityLessThanAndIsDeletedFalse(int threshold);
+
+    // Dynamic low stock: each product has its own minStockLevel
+    @org.springframework.data.jpa.repository.Query("SELECT p FROM Product p WHERE p.quantity <= p.minStockLevel AND p.isDeleted = false ORDER BY p.quantity ASC")
+    java.util.List<Product> findLowStockProducts();
+
+    @org.springframework.data.jpa.repository.Query("SELECT COUNT(p) FROM Product p WHERE p.quantity <= p.minStockLevel AND p.isDeleted = false")
+    long countLowStockProducts();
 }

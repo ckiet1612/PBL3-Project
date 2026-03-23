@@ -47,4 +47,22 @@ public class DataSeeder {
             }
         };
     }
+
+    @Bean
+    CommandLineRunner fixMinStockLevel(com.pbl3.project.pbl3_project.repository.ProductRepository productRepository) {
+        return args -> {
+            java.util.List<com.pbl3.project.pbl3_project.entity.Product> products = productRepository.findAll();
+            int fixed = 0;
+            for (com.pbl3.project.pbl3_project.entity.Product p : products) {
+                if (p.getMinStockLevel() == null || p.getMinStockLevel() == 0) {
+                    p.setMinStockLevel(10);
+                    productRepository.save(p);
+                    fixed++;
+                }
+            }
+            if (fixed > 0) {
+                System.out.println("Fixed min_stock_level for " + fixed + " products (set to 10).");
+            }
+        };
+    }
 }

@@ -34,10 +34,6 @@ public class Product {
     private Brand brand;
 
     @ManyToOne
-    @JoinColumn(name = "supplier_id")
-    private Supplier supplier;
-
-    @ManyToOne
     @JoinColumn(name = "origin_id")
     private Origin origin;
 
@@ -52,10 +48,13 @@ public class Product {
     @Column(nullable = false)
     private boolean isDeleted = false;
 
+    @Column(name = "min_stock_level", nullable = false, columnDefinition = "INTEGER DEFAULT 10")
+    private Integer minStockLevel = 10;
+
     public Product() {}
 
     public Product(Long id, String name, String description, Double price, Double importPrice, Integer quantity, String imageUrl, 
-                   Category category, Brand brand, Supplier supplier, Origin origin, Unit unit, 
+                   Category category, Brand brand, Origin origin, Unit unit, 
                    String sku, String barcode, boolean isDeleted) {
         this.id = id;
         this.name = name;
@@ -66,7 +65,6 @@ public class Product {
         this.imageUrl = imageUrl;
         this.category = category;
         this.brand = brand;
-        this.supplier = supplier;
         this.origin = origin;
         this.unit = unit;
         this.sku = sku;
@@ -101,9 +99,6 @@ public class Product {
     public Brand getBrand() { return brand; }
     public void setBrand(Brand brand) { this.brand = brand; }
 
-    public Supplier getSupplier() { return supplier; }
-    public void setSupplier(Supplier supplier) { this.supplier = supplier; }
-
     public Origin getOrigin() { return origin; }
     public void setOrigin(Origin origin) { this.origin = origin; }
 
@@ -118,4 +113,7 @@ public class Product {
 
     public boolean isDeleted() { return isDeleted; }
     public void setDeleted(boolean deleted) { isDeleted = deleted; }
+
+    public Integer getMinStockLevel() { return minStockLevel; }
+    public void setMinStockLevel(Integer minStockLevel) { this.minStockLevel = minStockLevel; }
 }

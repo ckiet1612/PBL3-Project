@@ -19,11 +19,13 @@ public class OrderService {
     private final OrderRepository orderRepository;
     private final ProductRepository productRepository;
     private final UserRepository userRepository;
+    private final InventoryTransactionService transactionService;
 
-    public OrderService(OrderRepository orderRepository, ProductRepository productRepository, UserRepository userRepository) {
+    public OrderService(OrderRepository orderRepository, ProductRepository productRepository, UserRepository userRepository, InventoryTransactionService transactionService) {
         this.orderRepository = orderRepository;
         this.productRepository = productRepository;
         this.userRepository = userRepository;
+        this.transactionService = transactionService;
     }
 
     @Transactional
@@ -35,6 +37,7 @@ public class OrderService {
         order.setUser(user);
         order.setCreatedAt(LocalDateTime.now());
         order.setOrderItems(new ArrayList<>());
+        order.setPaymentMethod(request.getPaymentMethod() != null ? request.getPaymentMethod() : com.pbl3.project.pbl3_project.entity.PaymentMethod.CASH);
         order.setTotalPrice(0.0);
 
         double total = 0;
@@ -63,7 +66,21 @@ public class OrderService {
         }
 
         order.setTotalPrice(total);
-        return orderRepository.save(order);
+        Order savedOrder = orderRepository.save(order);
+        
+        // Record inventory transactions
+        for (OrderItem item : savedOrder.getOrderItems()) {
+            transactionService.recordTransaction(
+                item.getProduct(), 
+                -item.getQuantity(), 
+                "SALE", 
+                savedOrder.getId(), 
+                user, 
+                "Sale Order #" + savedOrder.getId()
+            );
+        }
+        
+        return savedOrder;
     }
 
     public java.util.List<Order> getAllOrders() {
