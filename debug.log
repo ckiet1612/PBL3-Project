@@ -1,0 +1,68 @@
+[INFO] Scanning for projects...
+[INFO] 
+[INFO] -------------------< com.pbl3.project:pbl3-project >--------------------
+[INFO] Building Sales Management System 0.0.1-SNAPSHOT
+[INFO]   from pom.xml
+[INFO] --------------------------------[ jar ]---------------------------------
+[INFO] 
+[INFO] >>> javafx:0.0.8:run (default-cli) > process-classes @ pbl3-project >>>
+[WARNING] 6 problems were encountered while building the effective model for org.openjfx:javafx-controls:jar:21.0.1 during dependency collection step for project (use -X to see details)
+[INFO] 
+[INFO] --- resources:3.3.1:resources (default-resources) @ pbl3-project ---
+[INFO] Copying 1 resource from src/main/resources to target/classes
+[INFO] Copying 3 resources from src/main/resources to target/classes
+[INFO] 
+[INFO] --- compiler:3.13.0:compile (default-compile) @ pbl3-project ---
+[INFO] Nothing to compile - all classes are up to date.
+[INFO] 
+[INFO] <<< javafx:0.0.8:run (default-cli) < process-classes @ pbl3-project <<<
+[INFO] 
+[INFO] 
+[INFO] --- javafx:0.0.8:run (default-cli) @ pbl3-project ---
+
+  .   ____          _            __ _ _
+ /\\ / ___'_ __ _ _(_)_ __  __ _ \ \ \ \
+( ( )\___ | '_ | '_| | '_ \/ _` | \ \ \ \
+ \\/  ___)| |_)| | | | | || (_| |  ) ) ) )
+  '  |____| .__|_| |_|_| |_\__, | / / / /
+ =========|_|==============|___/=/_/_/_/
+
+ :: Spring Boot ::                (v3.4.1)
+
+2026-03-29T18:05:24.990+07:00  INFO 49113 --- [pbl3-project] [JavaFX-Launcher] o.s.boot.SpringApplication               : Starting application using Java 21.0.9 with PID 49113 (started by macbook in /Users/macbook/Documents/University Library/PBL3-Project)
+2026-03-29T18:05:24.991+07:00  INFO 49113 --- [pbl3-project] [JavaFX-Launcher] o.s.boot.SpringApplication               : No active profile set, falling back to 1 default profile: "default"
+2026-03-29T18:05:25.012+07:00  INFO 49113 --- [pbl3-project] [JavaFX-Launcher] .e.DevToolsPropertyDefaultsPostProcessor : For additional web related logging consider setting the 'logging.level.web' property to 'DEBUG'
+2026-03-29T18:05:25.326+07:00  INFO 49113 --- [pbl3-project] [JavaFX-Launcher] .s.d.r.c.RepositoryConfigurationDelegate : Bootstrapping Spring Data JPA repositories in DEFAULT mode.
+2026-03-29T18:05:25.375+07:00  INFO 49113 --- [pbl3-project] [JavaFX-Launcher] .s.d.r.c.RepositoryConfigurationDelegate : Finished Spring Data repository scanning in 44 ms. Found 12 JPA repository interfaces.
+2026-03-29T18:05:25.646+07:00  INFO 49113 --- [pbl3-project] [JavaFX-Launcher] o.s.b.w.embedded.tomcat.TomcatWebServer  : Tomcat initialized with port 8080 (http)
+2026-03-29T18:05:25.656+07:00  INFO 49113 --- [pbl3-project] [JavaFX-Launcher] o.apache.catalina.core.StandardService   : Starting service [Tomcat]
+2026-03-29T18:05:25.656+07:00  INFO 49113 --- [pbl3-project] [JavaFX-Launcher] o.apache.catalina.core.StandardEngine    : Starting Servlet engine: [Apache Tomcat/10.1.34]
+2026-03-29T18:05:25.682+07:00  INFO 49113 --- [pbl3-project] [JavaFX-Launcher] o.a.c.c.C.[Tomcat].[localhost].[/]       : Initializing Spring embedded WebApplicationContext
+2026-03-29T18:05:25.683+07:00  INFO 49113 --- [pbl3-project] [JavaFX-Launcher] w.s.c.ServletWebServerApplicationContext : Root WebApplicationContext: initialization completed in 669 ms
+2026-03-29T18:05:25.763+07:00  INFO 49113 --- [pbl3-project] [JavaFX-Launcher] o.hibernate.jpa.internal.util.LogHelper  : HHH000204: Processing PersistenceUnitInfo [name: default]
+2026-03-29T18:05:25.795+07:00  INFO 49113 --- [pbl3-project] [JavaFX-Launcher] org.hibernate.Version                    : HHH000412: Hibernate ORM core version 6.6.4.Final
+2026-03-29T18:05:25.809+07:00  INFO 49113 --- [pbl3-project] [JavaFX-Launcher] o.h.c.internal.RegionFactoryInitiator    : HHH000026: Second-level cache disabled
+2026-03-29T18:05:25.921+07:00  INFO 49113 --- [pbl3-project] [JavaFX-Launcher] o.s.o.j.p.SpringPersistenceUnitInfo      : No LoadTimeWeaver setup: ignoring JPA class transformer
+2026-03-29T18:05:25.935+07:00  INFO 49113 --- [pbl3-project] [JavaFX-Launcher] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Starting...
+2026-03-29T18:05:26.019+07:00  INFO 49113 --- [pbl3-project] [JavaFX-Launcher] com.zaxxer.hikari.pool.HikariPool        : HikariPool-1 - Added connection com.mysql.cj.jdbc.ConnectionImpl@3252db6e
+2026-03-29T18:05:26.020+07:00  INFO 49113 --- [pbl3-project] [JavaFX-Launcher] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Start completed.
+2026-03-29T18:05:26.049+07:00  WARN 49113 --- [pbl3-project] [JavaFX-Launcher] org.hibernate.orm.deprecation            : HHH90000025: MySQLDialect does not need to be specified explicitly using 'hibernate.dialect' (remove the property setting and it will be selected by default)
+2026-03-29T18:05:26.056+07:00  INFO 49113 --- [pbl3-project] [JavaFX-Launcher] org.hibernate.orm.connections.pooling    : HHH10001005: Database info:
+	Database JDBC URL [Connecting through datasource 'HikariDataSource (HikariPool-1)']
+	Database driver: undefined/unknown
+	Database version: 9.5
+	Autocommit mode: undefined/unknown
+	Isolation level: undefined/unknown
+	Minimum pool size: undefined/unknown
+	Maximum pool size: undefined/unknown
+2026-03-29T18:05:26.536+07:00  INFO 49113 --- [pbl3-project] [JavaFX-Launcher] o.h.e.t.j.p.i.JtaPlatformInitiator       : HHH000489: No JTA platform available (set 'hibernate.transaction.jta.platform' to enable JTA platform integration)
+2026-03-29T18:05:26.627+07:00  INFO 49113 --- [pbl3-project] [JavaFX-Launcher] j.LocalContainerEntityManagerFactoryBean : Initialized JPA EntityManagerFactory for persistence unit 'default'
+2026-03-29T18:05:26.781+07:00  INFO 49113 --- [pbl3-project] [JavaFX-Launcher] o.s.d.j.r.query.QueryEnhancerFactory     : Hibernate is in classpath; If applicable, HQL parser will be used.
+2026-03-29T18:05:27.320+07:00  WARN 49113 --- [pbl3-project] [JavaFX-Launcher] JpaBaseConfiguration$JpaWebConfiguration : spring.jpa.open-in-view is enabled by default. Therefore, database queries may be performed during view rendering. Explicitly configure spring.jpa.open-in-view to disable this warning
+2026-03-29T18:05:27.481+07:00  INFO 49113 --- [pbl3-project] [JavaFX-Launcher] o.s.b.w.embedded.tomcat.TomcatWebServer  : Tomcat started on port 8080 (http) with context path '/'
+2026-03-29T18:05:27.486+07:00  INFO 49113 --- [pbl3-project] [JavaFX-Launcher] o.s.boot.SpringApplication               : Started application in 2.672 seconds (process running for 3.065)
+Hibernate: select p1_0.id,p1_0.barcode,p1_0.brand_id,p1_0.category_id,p1_0.description,p1_0.image_url,p1_0.import_price,p1_0.is_deleted,p1_0.min_stock_level,p1_0.name,p1_0.origin_id,p1_0.price,p1_0.quantity,p1_0.sku,p1_0.unit_id from products p1_0
+Hibernate: select c1_0.id,c1_0.name from categories c1_0 where c1_0.id=?
+Hibernate: select c1_0.id,c1_0.name from categories c1_0 where c1_0.id=?
+Hibernate: select count(*) from categories c1_0
+Hibernate: select count(*) from users u1_0

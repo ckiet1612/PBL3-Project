@@ -202,7 +202,41 @@
 }
 
 /* Text Fields */
-/* Text Fields */
+/* Expandable Search Box */
+.expandable-search-box {
+    -fx-background-color: white;
+    -fx-background-radius: 20;
+    -fx-border-color: #CFD8DC;
+    -fx-border-radius: 20;
+    -fx-border-width: 1;
+    -fx-padding: 0;
+    -fx-cursor: hand;
+    -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.05), 3, 0, 0, 1);
+}
+
+.expandable-search-box:hover {
+    -fx-background-color: #E3F2FD;
+    -fx-border-color: #1976D2;
+    -fx-effect: dropshadow(three-pass-box, rgba(25,118,210,0.15), 4, 0, 0, 1);
+}
+
+.expandable-search-box:pressed {
+    -fx-background-color: #BBDEFB;
+    -fx-border-color: #1565C0;
+    -fx-effect: dropshadow(three-pass-box, rgba(21,101,192,0.2), 2, 0, 0, 0);
+}
+
+.text-field.search-text-field, .text-field.search-text-field:focused {
+    -fx-background-color: transparent;
+    -fx-border-color: transparent;
+    -fx-border-width: 0;
+    -fx-padding: 0 5;
+    -fx-effect: null;
+    -fx-background-insets: 0;
+    -fx-text-fill: #37474F;
+}
+
+/* Regular Text Fields */
 .text-field {
     -fx-background-color: white;
     -fx-background-radius: 10;
@@ -269,6 +303,180 @@
     -fx-background-color: #E3F2FD;
     -fx-text-fill: #1976D2;
     -fx-cursor: hand;
+}
+
+/* DatePicker Styling */
+.date-picker {
+    -fx-background-color: white;
+    -fx-background-radius: 10;
+    -fx-border-color: #B0BEC5;
+    -fx-border-radius: 10;
+    -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.05), 3, 0, 0, 1);
+    -fx-padding: 0;
+}
+
+.date-picker:focused, .date-picker:showing {
+    -fx-border-color: #1976D2;
+    -fx-effect: dropshadow(three-pass-box, rgba(25, 118, 210, 0.2), 5, 0, 0, 0);
+}
+
+.date-picker > .text-field {
+    -fx-background-color: transparent;
+    -fx-border-color: transparent;
+    -fx-effect: null;
+    -fx-padding: 4 8;
+    -fx-background-radius: 10 0 0 10;
+}
+
+.date-picker > .arrow-button {
+    -fx-background-color: transparent;
+    -fx-background-radius: 0 10 10 0;
+    -fx-padding: 6 8;
+}
+
+.date-picker > .arrow-button:hover {
+    -fx-background-color: #ECEFF1;
+}
+
+/* DatePicker Popup Styling */
+.date-picker-popup {
+    -fx-background-color: white;
+    -fx-background-radius: 12;
+    -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.15), 12, 0, 0, 4);
+}
+
+.date-picker-popup > .month-year-pane {
+    -fx-background-color: white;
+    -fx-padding: 6 8;
+    -fx-alignment: center;
+}
+
+.date-picker-popup > .month-year-pane > .spinner {
+    -fx-alignment: center;
+}
+
+.date-picker-popup > .month-year-pane > .spinner > .button {
+    visibility: hidden;
+    -fx-pref-width: 0;
+    -fx-min-width: 0;
+    -fx-max-width: 0;
+    -fx-pref-height: 0;
+    -fx-min-height: 0;
+    -fx-max-height: 0;
+    -fx-padding: 0;
+}
+
+.date-picker-popup > .month-year-pane > .spinner > .label {
+    -fx-text-fill: #1976D2;
+    -fx-font-weight: bold;
+    -fx-font-size: 14px;
+    -fx-cursor: hand;
+    -fx-padding: 4 12;
+    -fx-background-radius: 8;
+    -fx-border-color: #B0BEC5;
+    -fx-border-radius: 8;
+    -fx-border-width: 1;
+    -fx-background-color: white;
+    -fx-alignment: center;
+    -fx-max-width: Infinity;
+}
+
+.date-picker-popup > .month-year-pane > .spinner > .label:hover {
+    -fx-background-color: #E3F2FD;
+    -fx-border-color: #1976D2;
+}
+
+.date-picker-popup > .calendar-grid {
+    -fx-background-color: white;
+    -fx-padding: 4;
+}
+
+.date-picker-popup > .calendar-grid > .date-cell {
+    -fx-background-color: transparent;
+    -fx-font-size: 13px;
+    -fx-cursor: hand;
+    -fx-text-fill: #37474F;
+    -fx-padding: 4;
+}
+
+/* Days not in current month (previous/next) */
+.date-picker-popup > .calendar-grid > .previous-month,
+.date-picker-popup > .calendar-grid > .next-month {
+    -fx-text-fill: #B0BEC5;
+}
+
+/* Hover effect for all date cells */
+.date-picker-popup > .calendar-grid > .date-cell:hover {
+    -fx-background-color: #BBDEFB;
+    -fx-background-radius: 20;
+    -fx-background-insets: 2;
+}
+
+/* Selected date - darker blue, no hover change */
+.date-picker-popup > .calendar-grid > .selected {
+    -fx-background-color: #1565C0;
+    -fx-text-fill: white;
+    -fx-background-radius: 20;
+    -fx-background-insets: 2;
+    -fx-font-weight: bold;
+}
+
+.date-picker-popup > .calendar-grid > .selected:hover {
+    -fx-background-color: #1565C0;
+    -fx-text-fill: white;
+}
+
+/* Today indicator - use background layering instead of border to avoid clipping */
+.date-picker-popup > .calendar-grid > .today {
+    -fx-background-color: #BBDEFB, white;
+    -fx-background-radius: 20, 18;
+    -fx-background-insets: 2, 3;
+}
+
+.date-picker-popup > .calendar-grid > .today.selected {
+    -fx-background-color: #1565C0;
+    -fx-background-radius: 20;
+    -fx-background-insets: 2;
+    -fx-text-fill: white;
+}
+
+/* Day-of-week header labels */
+.date-picker-popup > .calendar-grid > .day-name-cell {
+    -fx-text-fill: #78909C;
+    -fx-font-size: 12px;
+    -fx-font-weight: bold;
+}
+
+/* Filter Button Styles */
+.filter-reset-btn {
+    -fx-background-color: #CFD8DC;
+    -fx-text-fill: #37474F;
+    -fx-background-radius: 20;
+    -fx-font-size: 13px;
+    -fx-padding: 6 16;
+}
+.filter-reset-btn:hover, .filter-reset-btn:pressed {
+    -fx-background-color: #CFD8DC;
+    -fx-text-fill: #37474F;
+}
+
+.filter-apply-btn {
+    -fx-background-color: #1976D2;
+    -fx-text-fill: white;
+    -fx-background-radius: 20;
+    -fx-font-size: 13px;
+    -fx-padding: 6 16;
+    -fx-font-weight: bold;
+}
+.filter-apply-btn:hover, .filter-apply-btn:pressed {
+    -fx-background-color: #1976D2;
+    -fx-text-fill: white;
+}
+
+/* Week number column */
+.date-picker-popup > .calendar-grid > .week-number-cell {
+    -fx-text-fill: #B0BEC5;
+    -fx-font-size: 11px;
 }
 
 /* Context Menu Styling */
@@ -726,4 +934,69 @@
 
 .scroll-bar:horizontal {
     -fx-pref-height: 8;
+}
+
+/* Custom CheckBox Styling */
+.check-box {
+    -fx-font-size: 13px;
+    -fx-text-fill: #455A64;
+    -fx-cursor: hand;
+}
+
+.check-box .box {
+    -fx-background-color: transparent;
+    -fx-border-color: #B0BEC5;
+    -fx-border-radius: 4px;
+    -fx-background-radius: 4px;
+    -fx-padding: 2px;
+    -fx-border-width: 1.5px;
+}
+
+.check-box:selected .box {
+    -fx-background-color: #1976D2;
+    -fx-border-color: #1976D2;
+}
+
+.check-box:selected .mark {
+    -fx-background-color: white;
+    -fx-shape: "M9,20c-0.3,0-0.5-0.1-0.7-0.3l-5-5c-0.4-0.4-0.4-1,0-1.4s1-0.4,1.4,0l4.3,4.3l10.3-10.3c0.4-0.4,1-0.4,1.4,0s0.4,1,0,1.4l-11,11C9.5,19.9,9.3,20,9,20z";
+}
+
+/* Custom Alert Dialog */
+.custom-alert.dialog-pane {
+    -fx-background-color: white;
+    -fx-min-width: 480px;
+}
+.custom-alert.dialog-pane > *.button-bar > *.container {
+    -fx-padding: 10px 15px 15px 15px;
+}
+.custom-alert.dialog-pane > *.label.content {
+    -fx-font-family: "Be Vietnam Pro", "Inter", "Segoe UI", sans-serif;
+    -fx-font-size: 14px;
+    -fx-text-fill: #37474F;
+    -fx-padding: 15px 15px 0 15px;
+}
+.custom-alert.dialog-pane .button {
+    -fx-font-family: "Be Vietnam Pro", "Inter", "Segoe UI", sans-serif;
+    -fx-background-color: #F5F7FA;
+    -fx-text-fill: #455A64;
+    -fx-font-weight: 600;
+    -fx-font-size: 13px;
+    -fx-padding: 8px 18px;
+    -fx-background-radius: 20px;
+    -fx-cursor: hand;
+    -fx-border-color: #CFD8DC;
+    -fx-border-radius: 20px;
+    -fx-border-width: 1px;
+}
+.custom-alert.dialog-pane .button:hover {
+    -fx-background-color: #ECEFF1;
+}
+.custom-alert.dialog-pane .button:default {
+    -fx-background-color: #F44336;
+    -fx-text-fill: white;
+    -fx-border-color: #D32F2F;
+}
+.custom-alert.dialog-pane .button:default:hover {
+    -fx-background-color: #D32F2F;
 }
