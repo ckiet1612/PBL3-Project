@@ -11,6 +11,7 @@ import org.springframework.stereotype.Service;
 
 import java.io.File;
 import java.io.FileOutputStream;
+import java.math.BigDecimal;
 import java.time.format.DateTimeFormatter;
 
 @Service
@@ -53,7 +54,11 @@ public class ReceiptService {
             // Order Info
             document.add(new Paragraph("Receipt #: " + order.getId(), normalFont));
             document.add(new Paragraph("Date: " + order.getCreatedAt().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")), normalFont));
-            document.add(new Paragraph("Cashier: " + order.getUser().getFullName(), normalFont));
+            document.add(new Paragraph("Cashier: " + order.getCreatedByDisplayName(), normalFont));
+            if (order.hasCustomer()) {
+                document.add(new Paragraph("Customer: " + order.getCustomerDisplayName(), normalFont));
+                document.add(new Paragraph("Phone: " + order.getCustomerPhoneDisplay(), normalFont));
+            }
             
             // Separator
             document.add(new Chunk(new LineSeparator(0.5f, 100, BaseColor.BLACK, Element.ALIGN_CENTER, -2)));
@@ -83,10 +88,13 @@ public class ReceiptService {
             table.addCell(createBorderlessCell("Total", headerFont, Element.ALIGN_RIGHT));
 
             for (OrderItem item : order.getOrderItems()) {
-                table.addCell(createBorderlessCell(item.getProduct().getName(), normalFont, Element.ALIGN_LEFT));
+                String itemName = item.getAppliedProductPromotionNameSnapshot() != null && !item.getAppliedProductPromotionNameSnapshot().isBlank()
+                    ? item.getProductDisplayName() + " (" + item.getAppliedProductPromotionNameSnapshot() + ")"
+                    : item.getProductDisplayName();
+                table.addCell(createBorderlessCell(itemName, normalFont, Element.ALIGN_LEFT));
                 table.addCell(createBorderlessCell(String.valueOf(item.getQuantity()), normalFont, Element.ALIGN_CENTER));
                 table.addCell(createBorderlessCell(formatCurrency(item.getPrice()), normalFont, Element.ALIGN_RIGHT));
-                table.addCell(createBorderlessCell(formatCurrency(item.getPrice() * item.getQuantity()), normalFont, Element.ALIGN_RIGHT));
+                table.addCell(createBorderlessCell(formatCurrency(item.getLineNetAmount()), normalFont, Element.ALIGN_RIGHT));
             }
             document.add(table);
 
@@ -98,6 +106,22 @@ public class ReceiptService {
             PdfPTable totalTable = new PdfPTable(2);
             totalTable.setWidthPercentage(100);
             totalTable.setWidths(new float[]{7f, 3f});
+
+            totalTable.addCell(createBorderlessCell("Gross Subtotal:", normalFont, Element.ALIGN_LEFT));
+            totalTable.addCell(createBorderlessCell(formatCurrency(order.getGrossSubtotalSnapshot()), normalFont, Element.ALIGN_RIGHT));
+
+            if (MoneySupport.isPositive(order.getProductLevelDiscountTotalSnapshot())) {
+                totalTable.addCell(createBorderlessCell("Product Discounts:", normalFont, Element.ALIGN_LEFT));
+                totalTable.addCell(createBorderlessCell("-" + formatCurrency(order.getProductLevelDiscountTotalSnapshot()), normalFont, Element.ALIGN_RIGHT));
+            }
+
+            if (MoneySupport.isPositive(order.getOrderLevelDiscountTotalSnapshot())) {
+                String orderPromoLabel = order.getAppliedOrderPromotionNameSnapshot() != null && !order.getAppliedOrderPromotionNameSnapshot().isBlank()
+                    ? "Order Promo (" + order.getAppliedOrderPromotionNameSnapshot() + "):"
+                    : "Order Promotion:";
+                totalTable.addCell(createBorderlessCell(orderPromoLabel, normalFont, Element.ALIGN_LEFT));
+                totalTable.addCell(createBorderlessCell("-" + formatCurrency(order.getOrderLevelDiscountTotalSnapshot()), normalFont, Element.ALIGN_RIGHT));
+            }
 
             totalTable.addCell(createBorderlessCell("TOTAL DUE:", titleFont, Element.ALIGN_LEFT));
             totalTable.addCell(createBorderlessCell(formatCurrency(order.getTotalPrice()), titleFont, Element.ALIGN_RIGHT));
@@ -135,8 +159,7 @@ public class ReceiptService {
         return cell;
     }
 
-    private String formatCurrency(Double amount) {
-        if (amount == null) return "0";
-        return String.format("%,.0f", amount);
+    private String formatCurrency(BigDecimal amount) {
+        return String.format("%,.0f", MoneySupport.normalize(amount).doubleValue());
     }
 }

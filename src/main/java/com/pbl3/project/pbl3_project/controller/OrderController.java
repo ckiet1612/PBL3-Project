@@ -19,13 +19,9 @@ public class OrderController {
     }
 
     @PostMapping
-    public ResponseEntity<?> createOrder(@RequestBody CreateOrderRequest request) {
-        try {
-            Order order = orderService.createOrder(request);
-            return ResponseEntity.ok(order);
-        } catch (RuntimeException e) {
-            return ResponseEntity.badRequest().body(e.getMessage());
-        }
+    public ResponseEntity<Order> createOrder(@RequestBody CreateOrderRequest request) {
+        Order order = orderService.createOrder(request);
+        return ResponseEntity.ok(order);
     }
 
     @org.springframework.web.bind.annotation.GetMapping

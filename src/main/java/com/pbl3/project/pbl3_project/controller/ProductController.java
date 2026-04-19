@@ -30,32 +30,17 @@ public class ProductController {
     }
 
     @PostMapping
-    public Product createProduct(@RequestBody Product product) {
-        return productService.saveProduct(product);
+    public ResponseEntity<?> createProduct(@RequestBody Product product) {
+        return ResponseEntity.status(403).body("Product write API requires an authenticated desktop session");
     }
 
     @PutMapping("/{id}")
     public ResponseEntity<Product> updateProduct(@PathVariable Long id, @RequestBody Product productDetails) {
-        return productService.getProductById(id)
-                .map(product -> {
-                    product.setName(productDetails.getName());
-                    product.setDescription(productDetails.getDescription());
-                    product.setPrice(productDetails.getPrice());
-                    product.setQuantity(productDetails.getQuantity());
-                    product.setCategory(productDetails.getCategory());
-                    product.setImageUrl(productDetails.getImageUrl());
-                    return ResponseEntity.ok(productService.saveProduct(product));
-                })
-                .orElse(ResponseEntity.notFound().build());
+        return ResponseEntity.status(403).build();
     }
 
     @DeleteMapping("/{id}")
     public ResponseEntity<?> deleteProduct(@PathVariable Long id) {
-        return productService.getProductById(id)
-                .map(product -> {
-                    productService.deleteProduct(id);
-                    return ResponseEntity.ok().build();
-                })
-                .orElse(ResponseEntity.notFound().build());
+        return ResponseEntity.status(403).body("Product delete API requires an authenticated desktop session");
     }
 }

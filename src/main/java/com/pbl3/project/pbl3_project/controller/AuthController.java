@@ -18,24 +18,18 @@ public class AuthController {
     }
 
     @PostMapping("/register")
-    public ResponseEntity<?> register(@RequestBody User user) {
-        try {
-            return ResponseEntity.ok(authService.register(user));
-        } catch (RuntimeException e) {
-            return ResponseEntity.badRequest().body(e.getMessage());
-        }
+    public ResponseEntity<User> register(@RequestBody User user) {
+        return ResponseEntity.ok(authService.register(user));
     }
 
     @PostMapping("/login")
     public ResponseEntity<?> login(@RequestBody Map<String, String> credentials) {
         String username = credentials.get("username");
         String password = credentials.get("password");
-        
         User user = authService.login(username, password);
         if (user != null) {
             return ResponseEntity.ok(user);
-        } else {
-            return ResponseEntity.status(401).body("Invalid username or password");
         }
+        return ResponseEntity.status(401).body("Invalid username or password");
     }
 }

@@ -1,9 +1,19 @@
 package com.pbl3.project.pbl3_project.entity;
 
 import jakarta.persistence.*;
+import org.hibernate.annotations.Check;
+
+import java.math.BigDecimal;
 
 @Entity
-@Table(name = "products")
+@Table(
+    name = "products",
+    indexes = {
+        @Index(name = "idx_products_category_id", columnList = "category_id"),
+        @Index(name = "idx_products_brand_id", columnList = "brand_id")
+    }
+)
+@Check(constraints = "quantity >= 0 and price >= 0 and (import_price is null or import_price >= 0) and min_stock_level >= 0")
 public class Product {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -14,8 +24,8 @@ public class Product {
 
     private String description;
 
-    @Column(nullable = false)
-    private Double price;
+    @Column(nullable = false, precision = 19, scale = 2)
+    private BigDecimal price;
 
     @Column(nullable = false)
     private Integer quantity;
@@ -27,7 +37,8 @@ public class Product {
 
     private String barcode;
 
-    private Double importPrice;
+    @Column(precision = 19, scale = 2)
+    private BigDecimal importPrice;
 
     @ManyToOne
     @JoinColumn(name = "brand_id")
@@ -51,9 +62,13 @@ public class Product {
     @Column(name = "min_stock_level", nullable = false, columnDefinition = "INTEGER DEFAULT 10")
     private Integer minStockLevel = 10;
 
+    @Version
+    @Column(nullable = false)
+    private Long version = 0L;
+
     public Product() {}
 
-    public Product(Long id, String name, String description, Double price, Double importPrice, Integer quantity, String imageUrl, 
+    public Product(Long id, String name, String description, BigDecimal price, BigDecimal importPrice, Integer quantity, String imageUrl,
                    Category category, Brand brand, Origin origin, Unit unit, 
                    String sku, String barcode, boolean isDeleted) {
         this.id = id;
@@ -81,11 +96,11 @@ public class Product {
     public String getDescription() { return description; }
     public void setDescription(String description) { this.description = description; }
 
-    public Double getPrice() { return price; }
-    public void setPrice(Double price) { this.price = price; }
+    public BigDecimal getPrice() { return price; }
+    public void setPrice(BigDecimal price) { this.price = price; }
 
-    public Double getImportPrice() { return importPrice; }
-    public void setImportPrice(Double importPrice) { this.importPrice = importPrice; }
+    public BigDecimal getImportPrice() { return importPrice; }
+    public void setImportPrice(BigDecimal importPrice) { this.importPrice = importPrice; }
 
     public Integer getQuantity() { return quantity; }
     public void setQuantity(Integer quantity) { this.quantity = quantity; }
@@ -116,4 +131,7 @@ public class Product {
 
     public Integer getMinStockLevel() { return minStockLevel; }
     public void setMinStockLevel(Integer minStockLevel) { this.minStockLevel = minStockLevel; }
+
+    public Long getVersion() { return version; }
+    public void setVersion(Long version) { this.version = version; }
 }

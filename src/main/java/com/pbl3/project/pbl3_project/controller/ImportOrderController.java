@@ -18,13 +18,9 @@ public class ImportOrderController {
     }
 
     @PostMapping
-    public ResponseEntity<?> createImportOrder(@RequestBody CreateImportOrderRequest request) {
-        try {
-            ImportOrder order = importOrderService.createImportOrder(request);
-            return ResponseEntity.ok(order);
-        } catch (RuntimeException e) {
-            return ResponseEntity.badRequest().body(e.getMessage());
-        }
+    public ResponseEntity<ImportOrder> createImportOrder(@RequestBody CreateImportOrderRequest request) {
+        ImportOrder order = importOrderService.createImportOrder(request);
+        return ResponseEntity.ok(order);
     }
 
     @GetMapping

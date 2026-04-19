@@ -1,6 +1,7 @@
 package com.pbl3.project.pbl3_project.dto;
 
 import java.util.List;
+import java.math.BigDecimal;
 
 public class CreateImportOrderRequest {
     private Long supplierId;
@@ -23,7 +24,7 @@ public class CreateImportOrderRequest {
     public static class ImportOrderItemRequest {
         private Long productId;
         private Integer quantity;
-        private Double importPrice;
+        private BigDecimal importPrice;
 
         public Long getProductId() { return productId; }
         public void setProductId(Long productId) { this.productId = productId; }
@@ -31,7 +32,7 @@ public class CreateImportOrderRequest {
         public Integer getQuantity() { return quantity; }
         public void setQuantity(Integer quantity) { this.quantity = quantity; }
 
-        public Double getImportPrice() { return importPrice; }
-        public void setImportPrice(Double importPrice) { this.importPrice = importPrice; }
+        public BigDecimal getImportPrice() { return importPrice; }
+        public void setImportPrice(BigDecimal importPrice) { this.importPrice = importPrice; }
     }
 }
