@@ -22,3 +22,13 @@ services:
         sync: false
       - key: TIDB_ADMIN_PASSWORD
         sync: false
+      - key: APP_LATEST_VERSION
+        sync: false
+      - key: APP_MIN_SUPPORTED_VERSION
+        sync: false
+      - key: APP_DOWNLOAD_URL_MAC
+        sync: false
+      - key: APP_DOWNLOAD_URL_WINDOWS
+        sync: false
+      - key: APP_RELEASE_NOTES
+        sync: false

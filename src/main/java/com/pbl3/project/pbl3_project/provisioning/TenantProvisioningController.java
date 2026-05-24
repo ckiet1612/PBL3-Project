@@ -22,18 +22,41 @@ public class TenantProvisioningController {
 
     private final TenantProvisioningService provisioningService;
     private final String apiKey;
+    private final AppUpdateResponse appUpdateResponse;
 
     public TenantProvisioningController(
         TenantProvisioningService provisioningService,
-        @Value("${provisioning.api-key:}") String apiKey
+        @Value("${provisioning.api-key:}") String apiKey,
+        @Value("${app.update.latest-version:}") String latestVersion,
+        @Value("${app.update.min-supported-version:}") String minSupportedVersion,
+        @Value("${app.update.download-url:}") String downloadUrl,
+        @Value("${app.update.download-url-mac:}") String downloadUrlMac,
+        @Value("${app.update.download-url-windows:}") String downloadUrlWindows,
+        @Value("${app.update.release-notes:}") String releaseNotes
     ) {
         this.provisioningService = provisioningService;
         this.apiKey = apiKey == null ? "" : apiKey.trim();
+        this.appUpdateResponse = new AppUpdateResponse(
+            normalize(latestVersion),
+            normalize(minSupportedVersion),
+            normalize(downloadUrl),
+            normalize(downloadUrlMac),
+            normalize(downloadUrlWindows),
+            normalize(releaseNotes)
+        );
     }
 
     @GetMapping("/health")
     public Map<String, String> health() {
         return Map.of("status", "UP");
+    }
+
+    @GetMapping("/app-update")
+    public AppUpdateResponse appUpdate(
+        @RequestHeader(value = "X-Provisioning-Key", required = false) String providedApiKey
+    ) {
+        requireApiKey(providedApiKey);
+        return appUpdateResponse;
     }
 
     @PostMapping("/businesses")
@@ -89,5 +112,19 @@ public class TenantProvisioningController {
         if (!apiKey.equals(providedApiKey)) {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid provisioning key");
         }
+    }
+
+    private String normalize(String value) {
+        return value == null || value.isBlank() ? null : value.trim();
+    }
+
+    public record AppUpdateResponse(
+        String latestVersion,
+        String minSupportedVersion,
+        String downloadUrl,
+        String downloadUrlMac,
+        String downloadUrlWindows,
+        String releaseNotes
+    ) {
     }
 }

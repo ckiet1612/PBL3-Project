@@ -66,6 +66,7 @@ xattr -cr "$JPACKAGE_INPUT_DIR" "$ICON_PATH" "$JPACKAGE_TEMP_DIR" "$OUTPUT_DIR" 
 JAVA_OPTIONS=(
     "-DAPP_DESKTOP_RELEASE=true"
     "-DPROVISIONING_API_BASE_URL=$PROVISIONING_API_BASE_URL"
+    "-Dapp.client.version=$APP_VERSION"
     "-Dspring.profiles.active=tenant-client"
     "-Dspring.main.web-application-type=none"
 )

@@ -9,6 +9,7 @@ import com.pbl3.project.pbl3_project.service.BrandService;
 import com.pbl3.project.pbl3_project.service.CategoryService;
 import com.pbl3.project.pbl3_project.service.CustomerService;
 import com.pbl3.project.pbl3_project.service.DataBackupService;
+import com.pbl3.project.pbl3_project.service.DesktopUpdateService;
 import com.pbl3.project.pbl3_project.service.ExpenseService;
 import com.pbl3.project.pbl3_project.service.ImportOrderService;
 import com.pbl3.project.pbl3_project.service.InventoryTransactionService;
@@ -63,6 +64,7 @@ public record ApplicationServices(
     InventoryTransactionService transactionService,
     StocktakeService stocktakeService,
     DataBackupService dataBackupService,
-    ApplicationVersionService applicationVersionService
+    ApplicationVersionService applicationVersionService,
+    DesktopUpdateService desktopUpdateService
 ) {
 }

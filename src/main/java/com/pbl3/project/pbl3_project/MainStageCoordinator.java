@@ -17,10 +17,13 @@ import com.pbl3.project.pbl3_project.ui.shell.MainSceneRouter;
 import com.pbl3.project.pbl3_project.ui.shell.VersionGateSceneFactory;
 import com.pbl3.project.pbl3_project.ui.bootstrap.TenantBootstrapStore;
 import com.pbl3.project.pbl3_project.ui.util.DialogSupport;
+import com.pbl3.project.pbl3_project.ui.util.UiTaskExecutor;
 import com.pbl3.project.pbl3_project.ui.scene.model.ImportOrderPrefill;
 import com.pbl3.project.pbl3_project.ui.scene.model.ProductViewPreset;
 import com.pbl3.project.pbl3_project.ui.scene.model.ReportFocusTarget;
 import com.pbl3.project.pbl3_project.ui.util.TableSortState;
+import java.net.URI;
+import java.util.Optional;
 import org.springframework.core.env.Environment;
 import org.springframework.core.env.Profiles;
 
@@ -38,6 +41,7 @@ public class MainStageCoordinator implements ApplicationListener<PrimaryStageRea
     private final java.util.Map<String, TableSortState> sessionSortStates = new java.util.concurrent.ConcurrentHashMap<>();
     private final java.util.Map<String, javafx.scene.Node> routeContentCache = new java.util.concurrent.ConcurrentHashMap<>();
     private final java.util.concurrent.atomic.AtomicInteger routePreloadGeneration = new java.util.concurrent.atomic.AtomicInteger();
+    private final java.util.concurrent.atomic.AtomicBoolean updateCheckStarted = new java.util.concurrent.atomic.AtomicBoolean();
     private int routeRequestVersion;
     private com.pbl3.project.pbl3_project.entity.User currentAuthenticatedUser;
     private boolean openShiftLeaveCheckRunning;
@@ -1000,6 +1004,90 @@ public class MainStageCoordinator implements ApplicationListener<PrimaryStageRea
             },
             shouldShowUseAnotherWorkspaceAction() ? () -> requestUseAnotherWorkspace(stage) : null
         ));
+        checkForDesktopUpdate(stage);
+    }
+
+    private void checkForDesktopUpdate(Stage stage) {
+        if (!updateCheckStarted.compareAndSet(false, true)) {
+            return;
+        }
+
+        javafx.concurrent.Task<Optional<DesktopUpdateService.DesktopUpdate>> task = new javafx.concurrent.Task<>() {
+            @Override
+            protected Optional<DesktopUpdateService.DesktopUpdate> call() {
+                return services.desktopUpdateService().checkForUpdate();
+            }
+        };
+        task.setOnSucceeded(event -> task.getValue().ifPresent(update -> showDesktopUpdateDialog(stage, update)));
+        UiTaskExecutor.execute(task, "desktop-update-checker");
+    }
+
+    private void showDesktopUpdateDialog(Stage stage, DesktopUpdateService.DesktopUpdate update) {
+        javafx.scene.control.Alert alert = new javafx.scene.control.Alert(javafx.scene.control.Alert.AlertType.INFORMATION);
+        if (stage != null) {
+            alert.initOwner(stage);
+            alert.initModality(javafx.stage.Modality.WINDOW_MODAL);
+        }
+        alert.setTitle("Update Available");
+        alert.setHeaderText("New version " + update.latestVersion() + " is available");
+
+        StringBuilder content = new StringBuilder();
+        content.append("Current version: ").append(update.currentVersion()).append('\n');
+        content.append("Latest version: ").append(update.latestVersion());
+        if (update.mandatory()) {
+            content.append("\n\nThis update is required for compatibility.");
+        }
+        if (update.releaseNotes() != null && !update.releaseNotes().isBlank()) {
+            content.append("\n\n").append(update.releaseNotes());
+        }
+        alert.setContentText(content.toString());
+
+        javafx.scene.control.ButtonType downloadButton = new javafx.scene.control.ButtonType(
+            "Download",
+            javafx.scene.control.ButtonBar.ButtonData.OK_DONE
+        );
+        javafx.scene.control.ButtonType laterButton = new javafx.scene.control.ButtonType(
+            "Later",
+            javafx.scene.control.ButtonBar.ButtonData.CANCEL_CLOSE
+        );
+        alert.getButtonTypes().setAll(downloadButton, laterButton);
+        applyDialogStyles(alert.getDialogPane(), stage);
+
+        Optional<javafx.scene.control.ButtonType> result = alert.showAndWait();
+        if (result.isPresent() && result.get() == downloadButton) {
+            openExternalLink(services.desktopUpdateService().buildDownloadUri(update));
+        }
+    }
+
+    private void openExternalLink(URI uri) {
+        if (uri == null) {
+            return;
+        }
+        try {
+            if (java.awt.Desktop.isDesktopSupported()
+                && java.awt.Desktop.getDesktop().isSupported(java.awt.Desktop.Action.BROWSE)) {
+                java.awt.Desktop.getDesktop().browse(uri);
+                return;
+            }
+            services.toastService().showWarning("Could not open browser automatically: " + uri);
+        } catch (Exception ex) {
+            services.toastService().showError("Could not open update link: " + resolveUserFacingMessage(ex));
+        }
+    }
+
+    private void applyDialogStyles(javafx.scene.control.DialogPane pane, javafx.stage.Window owner) {
+        if (pane == null) {
+            return;
+        }
+        if (owner != null && owner.getScene() != null) {
+            pane.getStylesheets().addAll(owner.getScene().getStylesheets());
+        } else {
+            java.net.URL stylesheet = getClass().getResource("/application.css");
+            if (stylesheet != null) {
+                pane.getStylesheets().add(stylesheet.toExternalForm());
+            }
+        }
+        pane.getStyleClass().add("custom-alert");
     }
 
     private boolean shouldShowUseAnotherWorkspaceAction() {

@@ -97,6 +97,9 @@ TENANT_REGISTRY_PASSWORD=<registry-password> \
 TIDB_ADMIN_JDBC_URL=<admin-jdbc-url> \
 TIDB_ADMIN_USERNAME=<admin-user> \
 TIDB_ADMIN_PASSWORD=<admin-password> \
+APP_LATEST_VERSION=<latest-desktop-version> \
+APP_DOWNLOAD_URL_MAC=<mac-dmg-url> \
+APP_DOWNLOAD_URL_WINDOWS=<windows-msi-url> \
 java -cp <app-classpath-or-jar> \
 com.pbl3.project.pbl3_project.provisioning.TenantProvisioningApplication
 ```
@@ -121,6 +124,9 @@ docker run --rm -p 8088:8080 \
   -e TIDB_ADMIN_JDBC_URL=<admin-jdbc-url> \
   -e TIDB_ADMIN_USERNAME=<admin-user> \
   -e TIDB_ADMIN_PASSWORD=<admin-password> \
+  -e APP_LATEST_VERSION=<latest-desktop-version> \
+  -e APP_DOWNLOAD_URL_MAC=<mac-dmg-url> \
+  -e APP_DOWNLOAD_URL_WINDOWS=<windows-msi-url> \
   pbl3-provisioning-api
 ```
 
@@ -128,6 +134,23 @@ Health check:
 
 ```text
 GET /api/provisioning/health
+```
+
+Desktop update metadata:
+
+```text
+GET /api/provisioning/app-update
+X-Provisioning-Key: <client-provisioning-key>
+```
+
+Example update env:
+
+```text
+APP_LATEST_VERSION=1.1.0
+APP_MIN_SUPPORTED_VERSION=1.0.0
+APP_DOWNLOAD_URL_MAC=https://github.com/<owner>/<repo>/releases/download/v1.1.0/Sales-Mgr-1.1.0.dmg
+APP_DOWNLOAD_URL_WINDOWS=https://github.com/<owner>/<repo>/releases/download/v1.1.0/Sales-Mgr-1.1.0.msi
+APP_RELEASE_NOTES=Bug fixes and POS performance improvements.
 ```
 
 The service listens on the cloud `PORT` environment variable when provided.
@@ -146,6 +169,11 @@ TIDB_PASSWORD
 TIDB_ADMIN_JDBC_URL
 TIDB_ADMIN_USERNAME
 TIDB_ADMIN_PASSWORD
+APP_LATEST_VERSION
+APP_MIN_SUPPORTED_VERSION
+APP_DOWNLOAD_URL_MAC
+APP_DOWNLOAD_URL_WINDOWS
+APP_RELEASE_NOTES
 ```
 
 After deployment, use the Render HTTPS URL as the desktop build URL:
@@ -153,6 +181,7 @@ After deployment, use the Render HTTPS URL as the desktop build URL:
 ```bash
 PROVISIONING_API_BASE_URL=https://<your-render-service>.onrender.com \
 PROVISIONING_API_KEY=<same-provisioning-key> \
+APP_VERSION=1.1.0 \
 ./scripts/package-macos-dmg.sh
 ```
 

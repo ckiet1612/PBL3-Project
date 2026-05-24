@@ -57,6 +57,7 @@ Copy-Item -Path $MainJarPath -Destination (Join-Path $JPackageInputDir $MainJar)
 $JavaOptions = @(
     "-DAPP_DESKTOP_RELEASE=true",
     "-DPROVISIONING_API_BASE_URL=$ProvisioningApiBaseUrl",
+    "-Dapp.client.version=$AppVersion",
     "-Dspring.profiles.active=tenant-client",
     "-Dspring.main.web-application-type=none"
 )
