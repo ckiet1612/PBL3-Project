@@ -19,22 +19,12 @@ public class SalesManagementDesktopApplication extends Application {
 
     private ConfigurableApplicationContext applicationContext;
     private boolean tenantBootstrapEnabled;
-    private Exception savedTenantStartupError;
 
     @Override
     public void init() {
         validateDesktopProfiles();
         tenantBootstrapEnabled = desktopReleaseMode() || isProfileActive("tenant-client");
         if (tenantBootstrapEnabled) {
-            new TenantBootstrapStore().load().ifPresent(tenantConfig -> {
-                try {
-                    applicationContext = new SpringApplicationBuilder(SalesManagementApplication.class)
-                        .web(WebApplicationType.NONE)
-                        .run(tenantStartupArgs(tenantConfig));
-                } catch (Exception ex) {
-                    savedTenantStartupError = ex;
-                }
-            });
             return;
         }
         applicationContext = new SpringApplicationBuilder(SalesManagementApplication.class)
@@ -63,20 +53,6 @@ public class SalesManagementDesktopApplication extends Application {
         TenantBootstrapSceneFactory factory = new TenantBootstrapSceneFactory();
         if (applicationContext != null) {
             applicationContext.publishEvent(new PrimaryStageReadyEvent(stage));
-            return;
-        }
-        if (savedTenantStartupError != null) {
-            factory.show(
-                new TenantBootstrapSceneFactory.Context(
-                    stage,
-                    store,
-                    provisioningApiBaseUrl(),
-                    propertyOrEnv("PROVISIONING_API_KEY", ""),
-                    tenantConfig -> bootSpringForTenant(stage, factory, tenantConfig)
-                ),
-                "Could not open the selected business workspace: " + userFriendlyStartupError(savedTenantStartupError),
-                true
-            );
             return;
         }
         store.load().ifPresentOrElse(
