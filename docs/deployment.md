@@ -82,6 +82,12 @@ dist\installers\windows\*.msi
 Deploy the provisioning API separately on a server/cloud host and keep it online
 for new device onboarding.
 
+Build the API jar locally with:
+
+```bash
+./mvnw -Pprovisioning-api -DskipTests package
+```
+
 ```bash
 SPRING_PROFILES_ACTIVE=provisioning \
 PROVISIONING_API_KEY=<strong-random-key> \
@@ -98,3 +104,56 @@ com.pbl3.project.pbl3_project.provisioning.TenantProvisioningApplication
 The provisioning API is the only process that should hold database admin
 credentials. Put HTTPS in front of it with a reverse proxy/load balancer if the
 Java process itself does not terminate TLS.
+
+### Docker Cloud Deploy
+
+The repository includes `Dockerfile.provisioning` for deploying only the
+Provisioning API:
+
+```bash
+docker build -f Dockerfile.provisioning -t pbl3-provisioning-api .
+docker run --rm -p 8088:8080 \
+  -e SPRING_PROFILES_ACTIVE=provisioning \
+  -e PROVISIONING_API_KEY=<strong-random-key> \
+  -e TIDB_JDBC_URL=<registry-jdbc-url> \
+  -e TIDB_USERNAME=<registry-user> \
+  -e TIDB_PASSWORD=<registry-password> \
+  -e TIDB_ADMIN_JDBC_URL=<admin-jdbc-url> \
+  -e TIDB_ADMIN_USERNAME=<admin-user> \
+  -e TIDB_ADMIN_PASSWORD=<admin-password> \
+  pbl3-provisioning-api
+```
+
+Health check:
+
+```text
+GET /api/provisioning/health
+```
+
+The service listens on the cloud `PORT` environment variable when provided.
+For local Docker, the container defaults to port `8080`.
+
+### Render Blueprint
+
+`render.yaml` is included for a Docker-based Render deployment. Create a new
+Blueprint from the repository and set these environment variables in Render:
+
+```text
+PROVISIONING_API_KEY
+TIDB_JDBC_URL
+TIDB_USERNAME
+TIDB_PASSWORD
+TIDB_ADMIN_JDBC_URL
+TIDB_ADMIN_USERNAME
+TIDB_ADMIN_PASSWORD
+```
+
+After deployment, use the Render HTTPS URL as the desktop build URL:
+
+```bash
+PROVISIONING_API_BASE_URL=https://<your-render-service>.onrender.com \
+PROVISIONING_API_KEY=<same-provisioning-key> \
+./scripts/package-macos-dmg.sh
+```
+
+Do not paste or commit real TiDB passwords into source files, scripts, or docs.

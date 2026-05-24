@@ -1,0 +1,13 @@
+.git
+.gitignore
+.DS_Store
+target
+dist
+data
+debug.log
+hs_err_pid*.log
+*.dmg
+*.msi
+*.iml
+.idea
+.vscode

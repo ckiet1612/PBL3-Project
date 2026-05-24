@@ -1,0 +1,23 @@
+FROM eclipse-temurin:21-jdk AS build
+
+WORKDIR /workspace
+
+COPY .mvn .mvn
+COPY mvnw pom.xml ./
+RUN ./mvnw -q -DskipTests dependency:go-offline
+
+COPY src src
+RUN ./mvnw -q -Pprovisioning-api -DskipTests package
+
+FROM eclipse-temurin:21-jre
+
+WORKDIR /app
+
+ENV SPRING_PROFILES_ACTIVE=provisioning
+ENV PORT=8080
+
+EXPOSE 8080
+
+COPY --from=build /workspace/target/pbl3-project-0.0.1-SNAPSHOT.jar /app/provisioning-api.jar
+
+ENTRYPOINT ["java", "-jar", "/app/provisioning-api.jar"]

@@ -1,0 +1,24 @@
+services:
+  - type: web
+    name: pbl3-provisioning-api
+    env: docker
+    dockerfilePath: ./Dockerfile.provisioning
+    plan: starter
+    healthCheckPath: /api/provisioning/health
+    envVars:
+      - key: SPRING_PROFILES_ACTIVE
+        value: provisioning
+      - key: PROVISIONING_API_KEY
+        sync: false
+      - key: TIDB_JDBC_URL
+        sync: false
+      - key: TIDB_USERNAME
+        sync: false
+      - key: TIDB_PASSWORD
+        sync: false
+      - key: TIDB_ADMIN_JDBC_URL
+        sync: false
+      - key: TIDB_ADMIN_USERNAME
+        sync: false
+      - key: TIDB_ADMIN_PASSWORD
+        sync: false

@@ -1,5 +1,7 @@
 package com.pbl3.project.pbl3_project.provisioning;
 
+import java.util.Map;
+
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.HttpStatus;
@@ -27,6 +29,11 @@ public class TenantProvisioningController {
     ) {
         this.provisioningService = provisioningService;
         this.apiKey = apiKey == null ? "" : apiKey.trim();
+    }
+
+    @GetMapping("/health")
+    public Map<String, String> health() {
+        return Map.of("status", "UP");
     }
 
     @PostMapping("/businesses")
