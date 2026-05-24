@@ -6,5 +6,6 @@ public enum OperationalSubjectType {
     IMPORT_ORDER,
     PROMOTION,
     EXPENSE,
-    STOCKTAKE_SESSION
+    STOCKTAKE_SESSION,
+    SALES_SHIFT
 }

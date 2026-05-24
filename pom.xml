@@ -71,6 +71,13 @@
 			<version>${javafx.version}</version>
 		</dependency>
 
+		<!-- QR rendering -->
+		<dependency>
+			<groupId>com.google.zxing</groupId>
+			<artifactId>core</artifactId>
+			<version>3.5.3</version>
+		</dependency>
+
 		<!-- iText for PDF Generation -->
 		<dependency>
 			<groupId>com.itextpdf</groupId>
@@ -139,9 +146,59 @@
 				<artifactId>javafx-maven-plugin</artifactId>
 				<version>0.0.8</version>
 				<configuration>
-					<mainClass>com.pbl3.project.pbl3_project.JavaFxApplication</mainClass>
+					<mainClass>com.pbl3.project.pbl3_project.SalesManagementDesktopApplication</mainClass>
+					<options>
+						<option>-Djavafx.cachedir=/tmp/pbl3-javafx-cache</option>
+					</options>
 				</configuration>
 			</plugin>
 		</plugins>
 	</build>
+	<profiles>
+		<profile>
+			<id>desktop-release</id>
+			<build>
+				<resources>
+					<resource>
+						<directory>src/main/resources</directory>
+					</resource>
+					<resource>
+						<directory>src/desktop-release/resources</directory>
+					</resource>
+				</resources>
+				<plugins>
+					<plugin>
+						<groupId>org.apache.maven.plugins</groupId>
+						<artifactId>maven-jar-plugin</artifactId>
+						<configuration>
+							<excludes>
+								<exclude>application-demo.properties</exclude>
+								<exclude>application-migration.properties</exclude>
+								<exclude>application-provisioning.properties</exclude>
+								<exclude>application-tidb.properties</exclude>
+								<exclude>db/migration/**</exclude>
+								<exclude>com/pbl3/project/pbl3_project/DemoDataSeedApplication.class</exclude>
+								<exclude>com/pbl3/project/pbl3_project/DatabaseMigrationApplication.class</exclude>
+								<exclude>com/pbl3/project/pbl3_project/config/DemoDataSeeder*.class</exclude>
+								<exclude>com/pbl3/project/pbl3_project/provisioning/**</exclude>
+							</excludes>
+						</configuration>
+					</plugin>
+					<plugin>
+						<groupId>org.springframework.boot</groupId>
+						<artifactId>spring-boot-maven-plugin</artifactId>
+						<configuration>
+							<mainClass>com.pbl3.project.pbl3_project.SalesManagementApplication</mainClass>
+							<excludes>
+								<exclude>
+									<groupId>org.projectlombok</groupId>
+									<artifactId>lombok</artifactId>
+								</exclude>
+							</excludes>
+						</configuration>
+					</plugin>
+				</plugins>
+			</build>
+		</profile>
+	</profiles>
 </project>

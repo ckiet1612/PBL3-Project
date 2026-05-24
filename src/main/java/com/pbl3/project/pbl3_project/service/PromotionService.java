@@ -201,13 +201,15 @@ public class PromotionService {
         applyPromotionFields(promotion, name, scope, discountType, discountValue, enabled, startsAt, endsAt, targetProductId, minOrderTotal);
         promotion.setCreatedBy(persistedActor);
         Promotion saved = promotionRepository.save(promotion);
-        operationalAuditLogService.record(
+        operationalAuditLogService.recordChange(
             persistedActor,
             OperationalAuditAction.PROMOTION_CREATED,
             OperationalSubjectType.PROMOTION,
             saved.getId(),
             buildSubjectLabel(saved),
-            "Promotion created"
+            "Promotion created",
+            null,
+            promotionSnapshot(saved)
         );
         return saved;
     }
@@ -229,15 +231,18 @@ public class PromotionService {
         User persistedActor = resolveWriter(actor);
         Promotion promotion = promotionRepository.findById(promotionId)
             .orElseThrow(() -> new ValidationException("Promotion not found: " + promotionId));
+        Map<String, Object> beforeSnapshot = promotionSnapshot(promotion);
         applyPromotionFields(promotion, name, scope, discountType, discountValue, enabled, startsAt, endsAt, targetProductId, minOrderTotal);
         Promotion saved = promotionRepository.save(promotion);
-        operationalAuditLogService.record(
+        operationalAuditLogService.recordChange(
             persistedActor,
             OperationalAuditAction.PROMOTION_UPDATED,
             OperationalSubjectType.PROMOTION,
             saved.getId(),
             buildSubjectLabel(saved),
-            "Promotion updated"
+            "Promotion updated",
+            beforeSnapshot,
+            promotionSnapshot(saved)
         );
         return saved;
     }
@@ -247,15 +252,18 @@ public class PromotionService {
         User persistedActor = resolveWriter(actor);
         Promotion promotion = promotionRepository.findById(promotionId)
             .orElseThrow(() -> new ValidationException("Promotion not found: " + promotionId));
+        Map<String, Object> beforeSnapshot = promotionSnapshot(promotion);
         promotion.setEnabled(enabled);
         Promotion saved = promotionRepository.save(promotion);
-        operationalAuditLogService.record(
+        operationalAuditLogService.recordChange(
             persistedActor,
             enabled ? OperationalAuditAction.PROMOTION_ENABLED : OperationalAuditAction.PROMOTION_DISABLED,
             OperationalSubjectType.PROMOTION,
             saved.getId(),
             buildSubjectLabel(saved),
-            enabled ? "Promotion enabled" : "Promotion disabled"
+            enabled ? "Promotion enabled" : "Promotion disabled",
+            beforeSnapshot,
+            promotionSnapshot(saved)
         );
         return saved;
     }
@@ -495,5 +503,51 @@ public class PromotionService {
             ? promotion.getName()
             : "Promotion";
         return name + " (#" + (promotion != null ? promotion.getId() : null) + ")";
+    }
+
+    private Map<String, Object> promotionSnapshot(Promotion promotion) {
+        if (promotion == null) {
+            return null;
+        }
+        Map<String, Object> snapshot = new LinkedHashMap<>();
+        snapshot.put("id", promotion.getId());
+        snapshot.put("name", promotion.getName());
+        snapshot.put("scope", promotion.getScope());
+        snapshot.put("discountType", promotion.getDiscountType());
+        snapshot.put("discountValue", MoneySupport.normalize(promotion.getDiscountValue()));
+        snapshot.put("enabled", promotion.isEnabled());
+        snapshot.put("startsAt", promotion.getStartsAt() != null ? promotion.getStartsAt().toString() : null);
+        snapshot.put("endsAt", promotion.getEndsAt() != null ? promotion.getEndsAt().toString() : null);
+        snapshot.put("targetProduct", productSnapshot(promotion.getTargetProduct()));
+        snapshot.put("minOrderTotal", MoneySupport.normalize(promotion.getMinOrderTotal()));
+        snapshot.put("createdBy", userSnapshot(promotion.getCreatedBy()));
+        snapshot.put("createdAt", promotion.getCreatedAt() != null ? promotion.getCreatedAt().toString() : null);
+        snapshot.put("updatedAt", promotion.getUpdatedAt() != null ? promotion.getUpdatedAt().toString() : null);
+        return snapshot;
+    }
+
+    private Map<String, Object> productSnapshot(Product product) {
+        if (product == null) {
+            return null;
+        }
+        Map<String, Object> snapshot = new LinkedHashMap<>();
+        snapshot.put("id", product.getId());
+        snapshot.put("name", product.getName());
+        snapshot.put("sku", product.getSku());
+        snapshot.put("barcode", product.getBarcode());
+        return snapshot;
+    }
+
+    private Map<String, Object> userSnapshot(User user) {
+        if (user == null) {
+            return null;
+        }
+        Map<String, Object> snapshot = new LinkedHashMap<>();
+        snapshot.put("id", user.getId());
+        snapshot.put("username", user.getUsername());
+        snapshot.put("fullName", user.getFullName());
+        snapshot.put("role", user.getRole());
+        snapshot.put("enabled", user.isEnabled());
+        return snapshot;
     }
 }

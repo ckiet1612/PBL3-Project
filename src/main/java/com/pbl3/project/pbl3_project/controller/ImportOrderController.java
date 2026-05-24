@@ -1,30 +1,37 @@
 package com.pbl3.project.pbl3_project.controller;
 
-import com.pbl3.project.pbl3_project.dto.CreateImportOrderRequest;
-import com.pbl3.project.pbl3_project.entity.ImportOrder;
-import com.pbl3.project.pbl3_project.service.ImportOrderService;
+import com.pbl3.project.pbl3_project.entity.User;
+import com.pbl3.project.pbl3_project.service.ApiSessionService;
+import com.pbl3.project.pbl3_project.service.AuthorizationService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
 
 @RestController
 @RequestMapping("/api/import-orders")
 public class ImportOrderController {
-    private final ImportOrderService importOrderService;
+    private final ApiSessionService apiSessionService;
+    private final AuthorizationService authorizationService;
 
-    public ImportOrderController(ImportOrderService importOrderService) {
-        this.importOrderService = importOrderService;
+    public ImportOrderController(ApiSessionService apiSessionService, AuthorizationService authorizationService) {
+        this.apiSessionService = apiSessionService;
+        this.authorizationService = authorizationService;
     }
 
     @PostMapping
-    public ResponseEntity<ImportOrder> createImportOrder(@RequestBody CreateImportOrderRequest request) {
-        ImportOrder order = importOrderService.createImportOrder(request);
-        return ResponseEntity.ok(order);
+    public ResponseEntity<String> createImportOrder(
+        @RequestHeader(value = "Authorization", required = false) String authorizationHeader
+    ) {
+        User actor = apiSessionService.requireUser(authorizationHeader);
+        authorizationService.requireImportGoodsAccess(actor);
+        return ResponseEntity.status(501).body("Import Orders API is not implemented yet");
     }
 
     @GetMapping
-    public List<ImportOrder> getAllImportOrders() {
-        return importOrderService.getAllImportOrders();
+    public ResponseEntity<String> getAllImportOrders(
+        @RequestHeader(value = "Authorization", required = false) String authorizationHeader
+    ) {
+        User actor = apiSessionService.requireUser(authorizationHeader);
+        authorizationService.requireImportGoodsAccess(actor);
+        return ResponseEntity.status(501).body("Import Orders API is not implemented yet");
     }
 }

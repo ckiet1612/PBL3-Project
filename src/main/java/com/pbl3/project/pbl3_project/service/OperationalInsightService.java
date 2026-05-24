@@ -460,7 +460,7 @@ public class OperationalInsightService {
             netSold14dByProductId.merge(item.getProduct().getId(), netQty, Integer::sum);
         }
 
-        List<InventoryTransaction> transactions = inventoryTransactionRepository.findAllWithProductOrderByCreatedAtDesc();
+        List<InventoryTransaction> transactions = inventoryTransactionRepository.findInboundWithProductOrderByCreatedAtDesc();
         Map<Long, LocalDateTime> lastInboundAtByProductId = new HashMap<>();
         List<AgingCandidate> agingCandidates = new ArrayList<>();
         LocalDate today = LocalDate.now();

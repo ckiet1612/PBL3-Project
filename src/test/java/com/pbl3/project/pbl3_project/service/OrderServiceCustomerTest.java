@@ -92,7 +92,7 @@ class OrderServiceCustomerTest {
 
         when(userRepository.findById(1L)).thenReturn(Optional.of(actor));
         when(customerRepository.findById(7L)).thenReturn(Optional.of(customer));
-        when(productRepository.findById(11L)).thenReturn(Optional.of(product));
+        when(productRepository.findByIdForUpdate(11L)).thenReturn(Optional.of(product));
         when(promotionService.previewBestProductPricing(org.mockito.ArgumentMatchers.anyCollection(), any())).thenReturn(java.util.Map.of());
         when(promotionService.resolveEligibleOrderPromotion(any(), any(), any())).thenReturn(null);
         when(orderRepository.save(any(Order.class))).thenAnswer(invocation -> {
@@ -139,7 +139,7 @@ class OrderServiceCustomerTest {
         product.setQuantity(10);
 
         when(userRepository.findById(1L)).thenReturn(Optional.of(actor));
-        when(productRepository.findById(11L)).thenReturn(Optional.of(product));
+        when(productRepository.findByIdForUpdate(11L)).thenReturn(Optional.of(product));
         when(promotionService.previewBestProductPricing(org.mockito.ArgumentMatchers.anyCollection(), any())).thenReturn(java.util.Map.of());
         when(promotionService.resolveEligibleOrderPromotion(any(), any(), any())).thenReturn(null);
         when(orderRepository.save(any(Order.class))).thenAnswer(invocation -> invocation.getArgument(0));
@@ -158,6 +158,40 @@ class OrderServiceCustomerTest {
         assertNull(saved.getCustomerNameSnapshot());
         assertNull(saved.getCustomerPhoneSnapshot());
         assertEquals("Guest", saved.getCustomerDisplayName());
+    }
+
+    @Test
+    void createOrderRejectsAggregatedQuantityThatExceedsStock() {
+        User actor = new User();
+        actor.setId(1L);
+        actor.setUsername("staff");
+        actor.setRole(Role.STAFF);
+        actor.setEnabled(true);
+
+        Product product = new Product();
+        product.setId(11L);
+        product.setName("Keyboard");
+        product.setPrice(new BigDecimal("150000.00"));
+        product.setImportPrice(new BigDecimal("100000.00"));
+        product.setQuantity(3);
+
+        when(userRepository.findById(1L)).thenReturn(Optional.of(actor));
+        when(productRepository.findByIdForUpdate(11L)).thenReturn(Optional.of(product));
+
+        CreateOrderRequest request = new CreateOrderRequest();
+        request.setUserId(1L);
+        request.setPaymentMethod(PaymentMethod.CASH);
+        CreateOrderRequest.OrderItemRequest firstItem = new CreateOrderRequest.OrderItemRequest();
+        firstItem.setProductId(11L);
+        firstItem.setQuantity(2);
+        CreateOrderRequest.OrderItemRequest secondItem = new CreateOrderRequest.OrderItemRequest();
+        secondItem.setProductId(11L);
+        secondItem.setQuantity(2);
+        request.setItems(new ArrayList<>(java.util.List.of(firstItem, secondItem)));
+
+        ValidationException ex = assertThrows(ValidationException.class, () -> orderService.createOrder(request));
+
+        assertEquals("Not enough stock for product: Keyboard", ex.getMessage());
     }
 
     @Test

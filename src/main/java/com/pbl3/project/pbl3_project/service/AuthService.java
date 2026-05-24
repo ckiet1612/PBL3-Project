@@ -19,15 +19,28 @@ public class AuthService {
         this.passwordEncoder = passwordEncoder;
     }
 
+    public User register(String username, String password, String fullName) {
+        User user = new User();
+        user.setUsername(username);
+        user.setPassword(password);
+        user.setFullName(fullName);
+        return register(user);
+    }
+
     public User register(User user) {
-        if (userRepository.findByUsernameIgnoreCase(user.getUsername()).isPresent()) {
+        if (user == null) {
+            throw new ValidationException("Registration request is required");
+        }
+        String username = cleanRequired(user.getUsername(), "Username");
+        String password = cleanRequired(user.getPassword(), "Password");
+        String fullName = cleanRequired(user.getFullName(), "Full name");
+        if (userRepository.findByUsernameIgnoreCase(username).isPresent()) {
             throw new RuntimeException("Username already exists");
         }
-        user.setUsername(user.getUsername().trim());
-        user.setPassword(passwordEncoder.encode(user.getPassword()));
-        if (user.getRole() == null) {
-            user.setRole(Role.STAFF);
-        }
+        user.setUsername(username);
+        user.setPassword(passwordEncoder.encode(password));
+        user.setFullName(fullName);
+        user.setRole(Role.STAFF);
         user.setEnabled(true);
         return userRepository.save(user);
     }
@@ -58,5 +71,12 @@ public class AuthService {
 
     private boolean isBcryptHash(String value) {
         return value != null && value.startsWith("$2");
+    }
+
+    private String cleanRequired(String value, String label) {
+        if (value == null || value.trim().isEmpty()) {
+            throw new ValidationException(label + " is required");
+        }
+        return value.trim();
     }
 }

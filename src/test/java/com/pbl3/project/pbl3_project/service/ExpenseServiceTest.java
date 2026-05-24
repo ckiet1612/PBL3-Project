@@ -66,14 +66,14 @@ class ExpenseServiceTest {
             ExpenseCategory.RENT,
             "  Main Store Rent  ",
             new BigDecimal("12500000"),
-            PaymentMethod.TRANSFER,
+            PaymentMethod.QR,
             "  April invoice  "
         );
 
         assertEquals(99L, saved.getId());
         assertEquals("Main Store Rent", saved.getTitle());
         assertEquals(MoneySupport.normalize(new BigDecimal("12500000")), saved.getAmount());
-        assertEquals(PaymentMethod.TRANSFER, saved.getPaymentMethod());
+        assertEquals(PaymentMethod.QR, saved.getPaymentMethod());
         assertEquals("April invoice", saved.getNote());
         assertEquals(actor, saved.getCreatedBy());
 

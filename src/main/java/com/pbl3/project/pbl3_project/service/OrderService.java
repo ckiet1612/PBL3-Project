@@ -13,6 +13,7 @@ import com.pbl3.project.pbl3_project.entity.PaymentMethod;
 import com.pbl3.project.pbl3_project.entity.Product;
 import com.pbl3.project.pbl3_project.entity.Promotion;
 import com.pbl3.project.pbl3_project.entity.ReturnRefundScope;
+import com.pbl3.project.pbl3_project.entity.SalesShift;
 import com.pbl3.project.pbl3_project.entity.User;
 import com.pbl3.project.pbl3_project.repository.CustomerRepository;
 import com.pbl3.project.pbl3_project.repository.OrderRepository;
@@ -24,6 +25,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.dao.OptimisticLockingFailureException;
+import org.springframework.dao.PessimisticLockingFailureException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -47,6 +49,32 @@ public class OrderService {
     private final InventoryLedgerService inventoryLedgerService;
     private final AuthorizationService authorizationService;
     private final OperationalAuditLogService operationalAuditLogService;
+    private final SalesShiftService salesShiftService;
+
+    @org.springframework.beans.factory.annotation.Autowired
+    public OrderService(
+        OrderRepository orderRepository,
+        CustomerRepository customerRepository,
+        ProductRepository productRepository,
+        UserRepository userRepository,
+        PromotionService promotionService,
+        InventoryTransactionService transactionService,
+        InventoryLedgerService inventoryLedgerService,
+        AuthorizationService authorizationService,
+        OperationalAuditLogService operationalAuditLogService,
+        SalesShiftService salesShiftService
+    ) {
+        this.orderRepository = orderRepository;
+        this.customerRepository = customerRepository;
+        this.productRepository = productRepository;
+        this.userRepository = userRepository;
+        this.promotionService = promotionService;
+        this.transactionService = transactionService;
+        this.inventoryLedgerService = inventoryLedgerService;
+        this.authorizationService = authorizationService;
+        this.operationalAuditLogService = operationalAuditLogService;
+        this.salesShiftService = salesShiftService;
+    }
 
     public OrderService(
         OrderRepository orderRepository,
@@ -59,15 +87,18 @@ public class OrderService {
         AuthorizationService authorizationService,
         OperationalAuditLogService operationalAuditLogService
     ) {
-        this.orderRepository = orderRepository;
-        this.customerRepository = customerRepository;
-        this.productRepository = productRepository;
-        this.userRepository = userRepository;
-        this.promotionService = promotionService;
-        this.transactionService = transactionService;
-        this.inventoryLedgerService = inventoryLedgerService;
-        this.authorizationService = authorizationService;
-        this.operationalAuditLogService = operationalAuditLogService;
+        this(
+            orderRepository,
+            customerRepository,
+            productRepository,
+            userRepository,
+            promotionService,
+            transactionService,
+            inventoryLedgerService,
+            authorizationService,
+            operationalAuditLogService,
+            null
+        );
     }
 
     @Transactional
@@ -79,9 +110,13 @@ public class OrderService {
             User user = userRepository.findById(request.getUserId())
                 .orElseThrow(() -> new ValidationException("User not found"));
             authorizationService.requireSalesAccess(user);
+            SalesShift activeShift = salesShiftService != null
+                ? salesShiftService.requireOpenShiftForSale(user)
+                : null;
 
             Order order = new Order();
             order.setUser(user);
+            order.setSalesShift(activeShift);
             Customer customer = resolveActiveCustomer(request.getCustomerId());
             if (customer != null) {
                 order.setCustomer(customer);
@@ -102,11 +137,15 @@ public class OrderService {
             order.setStatusNote(null);
             order.setCreatedByNameSnapshot(resolveUserDisplayName(user));
 
+            java.util.Map<Long, Integer> requestedQuantitiesByProductId = aggregateRequestedQuantities(request.getItems());
             java.util.Map<Long, Product> productById = new java.util.LinkedHashMap<>();
-            for (CreateOrderRequest.OrderItemRequest itemRequest : request.getItems()) {
-                Product product = productRepository.findById(itemRequest.getProductId())
-                    .orElseThrow(() -> new ValidationException("Product not found: " + itemRequest.getProductId()));
-                if (safeInt(product.getQuantity()) < itemRequest.getQuantity()) {
+            for (Map.Entry<Long, Integer> entry : requestedQuantitiesByProductId.entrySet()) {
+                Product product = productRepository.findByIdForUpdate(entry.getKey())
+                    .orElseThrow(() -> new ValidationException("Product not found: " + entry.getKey()));
+                if (product.isDeleted()) {
+                    throw new ValidationException("Product is no longer available: " + product.getName());
+                }
+                if (safeInt(product.getQuantity()) < entry.getValue()) {
                     throw new ValidationException("Not enough stock for product: " + product.getName());
                 }
                 inventoryLedgerService.ensureBaseline(product);
@@ -226,7 +265,7 @@ public class OrderService {
                 "Order created"
             );
             return savedOrder;
-        } catch (OptimisticLockingFailureException ex) {
+        } catch (OptimisticLockingFailureException | PessimisticLockingFailureException ex) {
             throw new ConcurrencyConflictException("Data changed, reload and try again");
         }
     }
@@ -407,12 +446,7 @@ public class OrderService {
     public BigDecimal getOrderMaxTotalPrice(User viewer) {
         authorizationService.requireOrderHistoryAccess(viewer);
         if (!authorizationService.canViewAllOrders(viewer)) {
-            return getAllOrders().stream()
-                .filter(order -> order.getUser() != null && order.getUser().getId().equals(viewer.getId()))
-                .map(Order::getTotalPrice)
-                .filter(java.util.Objects::nonNull)
-                .max(BigDecimal::compareTo)
-                .orElse(MoneySupport.ZERO);
+            return MoneySupport.normalize(orderRepository.findMaxTotalPriceByUserId(viewer.getId()));
         }
         return MoneySupport.normalize(orderRepository.findMaxTotalPrice());
     }
@@ -482,6 +516,9 @@ public class OrderService {
             order.setRefundedAmount(order.getTotalPrice() != null ? order.getTotalPrice() : MoneySupport.ZERO);
             order.setStatusNote(reason.trim());
             Order saved = orderRepository.save(order);
+            if (salesShiftService != null) {
+                salesShiftService.recordRefundEvent(user, saved, saved.getTotalPrice(), reason.trim());
+            }
             operationalAuditLogService.record(
                 user,
                 OperationalAuditAction.ORDER_CANCELED,
@@ -520,6 +557,7 @@ public class OrderService {
             }
 
             BigDecimal refundedAmount = MoneySupport.normalize(order.getRefundedAmount());
+            BigDecimal refundDeltaTotal = MoneySupport.ZERO;
             boolean changed = false;
             Set<Product> affectedProducts = new HashSet<>();
 
@@ -544,7 +582,9 @@ public class OrderService {
                 BigDecimal refundAfter = item.calculateRefundForReturnedQuantity(updatedReturnedQty);
 
                 item.setReturnedQuantity(updatedReturnedQty);
-                refundedAmount = MoneySupport.add(refundedAmount, MoneySupport.subtract(refundAfter, refundBefore));
+                BigDecimal refundDelta = MoneySupport.subtract(refundAfter, refundBefore);
+                refundedAmount = MoneySupport.add(refundedAmount, refundDelta);
+                refundDeltaTotal = MoneySupport.add(refundDeltaTotal, refundDelta);
                 changed = true;
 
                 transactionService.recordTransaction(
@@ -574,6 +614,9 @@ public class OrderService {
             order.setStatus(fullyReturned ? OrderStatus.RETURNED : OrderStatus.PARTIALLY_RETURNED);
 
             Order saved = orderRepository.save(order);
+            if (salesShiftService != null && MoneySupport.isPositive(refundDeltaTotal)) {
+                salesShiftService.recordRefundEvent(user, saved, refundDeltaTotal, reason.trim());
+            }
             operationalAuditLogService.record(
                 user,
                 OperationalAuditAction.ORDER_RETURNED,
@@ -618,6 +661,29 @@ public class OrderService {
             throw new ValidationException("Selected customer is disabled");
         }
         return customer;
+    }
+
+    private java.util.Map<Long, Integer> aggregateRequestedQuantities(
+        java.util.List<CreateOrderRequest.OrderItemRequest> itemRequests
+    ) {
+        java.util.Map<Long, Integer> requestedQuantitiesByProductId = new java.util.TreeMap<>();
+        for (CreateOrderRequest.OrderItemRequest itemRequest : itemRequests) {
+            if (itemRequest == null || itemRequest.getProductId() == null) {
+                throw new ValidationException("Product is required for each item");
+            }
+            int quantity = safeInt(itemRequest.getQuantity());
+            if (quantity <= 0) {
+                throw new ValidationException("Item quantity must be greater than zero");
+            }
+            requestedQuantitiesByProductId.merge(itemRequest.getProductId(), quantity, (left, right) -> {
+                try {
+                    return Math.addExact(left, right);
+                } catch (ArithmeticException ex) {
+                    throw new ValidationException("Item quantity is too large");
+                }
+            });
+        }
+        return requestedQuantitiesByProductId;
     }
 
     private String resolveUserDisplayName(User user) {

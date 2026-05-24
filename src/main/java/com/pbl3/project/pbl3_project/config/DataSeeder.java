@@ -5,6 +5,7 @@ import com.pbl3.project.pbl3_project.entity.User;
 import com.pbl3.project.pbl3_project.repository.UserRepository;
 import com.pbl3.project.pbl3_project.service.InventoryLedgerService;
 import org.springframework.boot.CommandLineRunner;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.annotation.Order;
@@ -13,6 +14,7 @@ import java.math.BigDecimal;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 @Configuration
+@ConditionalOnProperty(name = "app.seed.enabled", havingValue = "true", matchIfMissing = true)
 public class DataSeeder {
 
     @Bean

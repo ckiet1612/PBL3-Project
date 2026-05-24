@@ -176,14 +176,16 @@ public class ReportService {
         long todayOrders = safeLong(orderRepository.countOrdersBetween(todayStart, todayEnd));
         long yesterdayOrders = safeLong(orderRepository.countOrdersBetween(yesterdayStart, yesterdayEnd));
 
+        LocalDateTime last7DaysRangeStart = last7DaysStart.atStartOfDay();
         List<Product> activeProducts = productRepository.findAllActiveWithCategory();
         List<Product> lowStockProducts = productRepository.findLowStockProducts();
-        List<InventoryTransaction> transactions = inventoryTransactionRepository.findAllWithProductOrderByCreatedAtDesc();
-        List<OrderItem> orderItems = orderItemRepository.findAllWithOrderAndProduct();
-        List<Order> orders = orderRepository.findAll();
+        List<InventoryTransaction> transactionsSinceYesterday =
+            inventoryTransactionRepository.findAllWithProductAfterOrderByCreatedAtDesc(yesterdayEnd);
+        List<OrderItem> orderItems = orderItemRepository.findAllWithOrderAndProductWithinDateRange(last7DaysRangeStart, todayEnd);
+        List<Order> orders = orderRepository.findAllWithinDateRange(last7DaysRangeStart, todayEnd);
 
         long currentLowStockCount = lowStockProducts.size();
-        long previousLowStockCount = calculateLowStockCountAt(activeProducts, transactions, yesterdayEnd);
+        long previousLowStockCount = calculateLowStockCountAt(activeProducts, transactionsSinceYesterday, yesterdayEnd);
 
         SalesMixSnapshot salesMix = buildSalesMixSnapshot(orders, orderItems, last7DaysStart, today, 5);
 
@@ -218,7 +220,7 @@ public class ReportService {
         List<Order> orders = orderRepository.findAllWithinDateRange(rangeStart, rangeEnd);
         List<OrderItem> orderItems = orderItemRepository.findAllWithOrderAndProductWithinDateRange(rangeStart, rangeEnd);
         List<Product> activeProducts = productRepository.findAllActiveWithCategory();
-        List<InventoryTransaction> transactions = inventoryTransactionRepository.findAllWithProductOrderByCreatedAtDesc();
+        List<InventoryTransaction> transactions = inventoryTransactionRepository.findInboundWithProductOrderByCreatedAtDesc();
         List<ExpenseCategorySummaryRow> expenseCategorySummaries = expenseRepository.findCategorySummariesBetween(startDate, endDate).stream()
             .sorted(Comparator
                 .comparing(ExpenseCategorySummaryRow::totalAmount, Comparator.nullsLast(BigDecimal::compareTo))
@@ -528,7 +530,7 @@ public class ReportService {
         Map<PaymentMethod, Long> counts = new LinkedHashMap<>();
         counts.put(PaymentMethod.CASH, 0L);
         counts.put(PaymentMethod.CARD, 0L);
-        counts.put(PaymentMethod.TRANSFER, 0L);
+        counts.put(PaymentMethod.QR, 0L);
 
         for (Order order : orders) {
             if (!isOrderEligible(order) || !isWithinDateRange(order.getCreatedAt(), startDate, endDate) || order.getPaymentMethod() == null) {

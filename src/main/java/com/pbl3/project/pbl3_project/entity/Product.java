@@ -35,6 +35,7 @@ public class Product {
     @Column(unique = true)
     private String sku;
 
+    @Column(unique = true)
     private String barcode;
 
     @Column(precision = 19, scale = 2)

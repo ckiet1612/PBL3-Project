@@ -1,5 +1,7 @@
 package com.pbl3.project.pbl3_project.service;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.pbl3.project.pbl3_project.entity.OperationalAuditAction;
 import com.pbl3.project.pbl3_project.entity.OperationalAuditLog;
 import com.pbl3.project.pbl3_project.entity.OperationalSubjectType;
@@ -23,6 +25,7 @@ public class OperationalAuditLogService {
 
     private final OperationalAuditLogRepository repository;
     private final AuthorizationService authorizationService;
+    private final ObjectMapper objectMapper = new ObjectMapper().findAndRegisterModules();
 
     public OperationalAuditLogService(OperationalAuditLogRepository repository, AuthorizationService authorizationService) {
         this.repository = repository;
@@ -44,6 +47,28 @@ public class OperationalAuditLogService {
         log.setSubjectId(subjectId);
         log.setSubjectLabel(subjectLabel);
         log.setDetails(details);
+        return repository.save(log);
+    }
+
+    public OperationalAuditLog recordChange(
+        User actor,
+        OperationalAuditAction action,
+        OperationalSubjectType subjectType,
+        Long subjectId,
+        String subjectLabel,
+        String details,
+        Object beforeState,
+        Object afterState
+    ) {
+        OperationalAuditLog log = new OperationalAuditLog();
+        log.setActor(actor);
+        log.setAction(action);
+        log.setSubjectType(subjectType);
+        log.setSubjectId(subjectId);
+        log.setSubjectLabel(subjectLabel);
+        log.setDetails(details);
+        log.setBeforeJson(toJson(beforeState));
+        log.setAfterJson(toJson(afterState));
         return repository.save(log);
     }
 
@@ -77,7 +102,9 @@ public class OperationalAuditLogService {
                     cb.like(cb.lower(root.get("action").as(String.class)), likeValue),
                     cb.like(cb.lower(root.get("subjectType").as(String.class)), likeValue),
                     cb.like(cb.lower(cb.coalesce(root.get("subjectLabel"), "")), likeValue),
-                    cb.like(cb.lower(cb.coalesce(root.get("details"), "")), likeValue)
+                    cb.like(cb.lower(cb.coalesce(root.get("details"), "")), likeValue),
+                    cb.like(cb.lower(cb.coalesce(root.get("beforeJson"), "")), likeValue),
+                    cb.like(cb.lower(cb.coalesce(root.get("afterJson"), "")), likeValue)
                 ));
             }
 
@@ -108,5 +135,27 @@ public class OperationalAuditLogService {
             authorizationService.requireAuditLogAccess(viewer);
         }
         return new LinkedHashSet<>(repository.findDistinctActorUsernames()).stream().toList();
+    }
+
+    private String toJson(Object value) {
+        if (value == null) {
+            return null;
+        }
+        try {
+            return objectMapper.writeValueAsString(value);
+        } catch (JsonProcessingException ex) {
+            return "{\"snapshotError\":\"" + escapeJson(ex.getMessage()) + "\"}";
+        }
+    }
+
+    private String escapeJson(String value) {
+        if (value == null) {
+            return "";
+        }
+        return value
+            .replace("\\", "\\\\")
+            .replace("\"", "\\\"")
+            .replace("\n", "\\n")
+            .replace("\r", "\\r");
     }
 }

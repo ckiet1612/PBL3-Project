@@ -101,7 +101,7 @@ class OrderServicePromotionPricingTest {
         orderPromotion.setDiscountValue(new BigDecimal("10"));
 
         when(userRepository.findById(1L)).thenReturn(Optional.of(actor));
-        when(productRepository.findById(11L)).thenReturn(Optional.of(product));
+        when(productRepository.findByIdForUpdate(11L)).thenReturn(Optional.of(product));
         when(promotionService.previewBestProductPricing(anyCollection(), any())).thenReturn(Map.of(
             11L,
             new PromotionService.ProductPricingPreview(

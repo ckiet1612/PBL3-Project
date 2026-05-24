@@ -39,7 +39,7 @@ public class InventoryTransaction {
     private InventoryTransactionType transactionType;
 
     @Column(name = "reference_id")
-    private Long referenceId; // order_id or import_order_id
+    private Long referenceId;
 
     @ManyToOne
     @JoinColumn(name = "order_id")
@@ -53,7 +53,7 @@ public class InventoryTransaction {
 
     @ManyToOne
     @JoinColumn(name = "user_id")
-    private User user; // Who made the action
+    private User user;
 
     @Column(columnDefinition = "TEXT")
     private String notes;
@@ -97,8 +97,6 @@ public class InventoryTransaction {
         this.unitCostSnapshot = unitCostSnapshot;
         this.inventoryValueChange = inventoryValueChange;
     }
-
-    // Getters and Setters
 
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }

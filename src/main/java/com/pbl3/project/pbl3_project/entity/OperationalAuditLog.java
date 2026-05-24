@@ -44,6 +44,12 @@ public class OperationalAuditLog {
     @Column(columnDefinition = "TEXT")
     private String details;
 
+    @Column(name = "before_json", columnDefinition = "TEXT")
+    private String beforeJson;
+
+    @Column(name = "after_json", columnDefinition = "TEXT")
+    private String afterJson;
+
     @Column(nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
@@ -106,6 +112,22 @@ public class OperationalAuditLog {
 
     public void setDetails(String details) {
         this.details = details;
+    }
+
+    public String getBeforeJson() {
+        return beforeJson;
+    }
+
+    public void setBeforeJson(String beforeJson) {
+        this.beforeJson = beforeJson;
+    }
+
+    public String getAfterJson() {
+        return afterJson;
+    }
+
+    public void setAfterJson(String afterJson) {
+        this.afterJson = afterJson;
     }
 
     public LocalDateTime getCreatedAt() {

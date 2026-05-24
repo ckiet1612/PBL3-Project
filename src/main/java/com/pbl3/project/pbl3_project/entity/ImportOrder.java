@@ -55,7 +55,6 @@ public class ImportOrder {
     @OneToMany(mappedBy = "importOrder", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<ImportOrderItem> items;
 
-    // Constructors, Getters, Setters
     public ImportOrder() {}
 
     public Long getId() { return id; }

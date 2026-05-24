@@ -3,6 +3,7 @@ package com.pbl3.project.pbl3_project.repository;
 import com.pbl3.project.pbl3_project.dto.IdLabelOption;
 import com.pbl3.project.pbl3_project.dto.CustomerOrderAggregate;
 import com.pbl3.project.pbl3_project.entity.Order;
+import com.pbl3.project.pbl3_project.entity.PaymentMethod;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.stereotype.Repository;
@@ -14,6 +15,20 @@ import java.util.Collection;
 public interface OrderRepository extends JpaRepository<Order, Long>, JpaSpecificationExecutor<Order> {
     @org.springframework.data.jpa.repository.Query("SELECT o FROM Order o LEFT JOIN FETCH o.customer LEFT JOIN FETCH o.orderItems WHERE o.id = :id")
     java.util.Optional<Order> findByIdWithItems(@org.springframework.data.repository.query.Param("id") Long id);
+
+    @org.springframework.data.jpa.repository.Modifying(clearAutomatically = true, flushAutomatically = true)
+    @org.springframework.transaction.annotation.Transactional
+    @org.springframework.data.jpa.repository.Query("""
+        UPDATE Order o
+        SET o.receiptFilePath = :receiptFilePath,
+            o.receiptGeneratedAt = :receiptGeneratedAt
+        WHERE o.id = :orderId
+    """)
+    int updateReceiptMetadata(
+        @org.springframework.data.repository.query.Param("orderId") Long orderId,
+        @org.springframework.data.repository.query.Param("receiptFilePath") String receiptFilePath,
+        @org.springframework.data.repository.query.Param("receiptGeneratedAt") java.time.LocalDateTime receiptGeneratedAt
+    );
 
     @org.springframework.data.jpa.repository.Query("""
         SELECT DISTINCT new com.pbl3.project.pbl3_project.dto.IdLabelOption(
@@ -47,6 +62,9 @@ public interface OrderRepository extends JpaRepository<Order, Long>, JpaSpecific
 
     @org.springframework.data.jpa.repository.Query("SELECT COALESCE(MAX(o.totalPrice), 0) FROM Order o")
     BigDecimal findMaxTotalPrice();
+
+    @org.springframework.data.jpa.repository.Query("SELECT COALESCE(MAX(o.totalPrice), 0) FROM Order o WHERE o.user.id = :userId")
+    BigDecimal findMaxTotalPriceByUserId(@org.springframework.data.repository.query.Param("userId") Long userId);
 
     @org.springframework.data.jpa.repository.Query("""
         SELECT SUM(
@@ -116,4 +134,29 @@ public interface OrderRepository extends JpaRepository<Order, Long>, JpaSpecific
         WHERE o.appliedOrderPromotionIdSnapshot = :promotionId
     """)
     long countByAppliedOrderPromotionIdSnapshot(@org.springframework.data.repository.query.Param("promotionId") Long promotionId);
+
+    @org.springframework.data.jpa.repository.Query("""
+        SELECT COALESCE(SUM(
+            CASE
+                WHEN o.status = com.pbl3.project.pbl3_project.entity.OrderStatus.CANCELED THEN 0
+                ELSE o.totalPrice
+            END
+        ), 0)
+        FROM Order o
+        WHERE o.salesShift.id = :shiftId
+    """)
+    BigDecimal sumSalesRevenueByShiftId(@org.springframework.data.repository.query.Param("shiftId") Long shiftId);
+
+    @org.springframework.data.jpa.repository.Query("""
+        SELECT COALESCE(SUM(o.totalPrice), 0)
+        FROM Order o
+        WHERE o.salesShift.id = :shiftId
+          AND o.paymentMethod = :paymentMethod
+    """)
+    BigDecimal sumSalesByShiftIdAndPaymentMethod(
+        @org.springframework.data.repository.query.Param("shiftId") Long shiftId,
+        @org.springframework.data.repository.query.Param("paymentMethod") PaymentMethod paymentMethod
+    );
+
+    long countBySalesShiftId(Long shiftId);
 }

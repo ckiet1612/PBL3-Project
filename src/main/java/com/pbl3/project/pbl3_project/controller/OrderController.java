@@ -1,31 +1,50 @@
 package com.pbl3.project.pbl3_project.controller;
 
 import com.pbl3.project.pbl3_project.dto.CreateOrderRequest;
-import com.pbl3.project.pbl3_project.entity.Order;
-import com.pbl3.project.pbl3_project.service.OrderService;
+import com.pbl3.project.pbl3_project.entity.User;
+import com.pbl3.project.pbl3_project.feature.orders.OrderCheckoutFeature;
+import com.pbl3.project.pbl3_project.service.ApiSessionService;
+import com.pbl3.project.pbl3_project.service.AuthorizationService;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping("/api/orders")
 public class OrderController {
-    private final OrderService orderService;
+    private final OrderCheckoutFeature orderCheckoutFeature;
+    private final ApiSessionService apiSessionService;
+    private final AuthorizationService authorizationService;
 
-    public OrderController(OrderService orderService) {
-        this.orderService = orderService;
+    public OrderController(
+        OrderCheckoutFeature orderCheckoutFeature,
+        ApiSessionService apiSessionService,
+        AuthorizationService authorizationService
+    ) {
+        this.orderCheckoutFeature = orderCheckoutFeature;
+        this.apiSessionService = apiSessionService;
+        this.authorizationService = authorizationService;
     }
 
     @PostMapping
-    public ResponseEntity<Order> createOrder(@RequestBody CreateOrderRequest request) {
-        Order order = orderService.createOrder(request);
-        return ResponseEntity.ok(order);
+    public ResponseEntity<?> createOrder(
+        @RequestHeader(value = "Authorization", required = false) String authorizationHeader,
+        @RequestBody CreateOrderRequest request
+    ) {
+        User actor = apiSessionService.requireUser(authorizationHeader);
+        return ResponseEntity.ok(orderCheckoutFeature.createOrder(actor, request));
     }
 
-    @org.springframework.web.bind.annotation.GetMapping
-    public java.util.List<Order> getAllOrders() {
-        return orderService.getAllOrders();
+    @GetMapping
+    public ResponseEntity<String> getAllOrders(
+        @RequestHeader(value = "Authorization", required = false) String authorizationHeader
+    ) {
+        User actor = apiSessionService.requireUser(authorizationHeader);
+        authorizationService.requireOrderHistoryAccess(actor);
+        return ResponseEntity.status(501).body("Orders list API is not implemented yet");
     }
 }

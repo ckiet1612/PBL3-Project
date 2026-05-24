@@ -1,5 +1,7 @@
 package com.pbl3.project.pbl3_project.service;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.pbl3.project.pbl3_project.entity.AccountAuditAction;
 import com.pbl3.project.pbl3_project.entity.AccountAuditLog;
 import com.pbl3.project.pbl3_project.entity.User;
@@ -22,6 +24,7 @@ public class AccountAuditLogService {
 
     private final AccountAuditLogRepository accountAuditLogRepository;
     private final AuthorizationService authorizationService;
+    private final ObjectMapper objectMapper = new ObjectMapper().findAndRegisterModules();
 
     public AccountAuditLogService(AccountAuditLogRepository accountAuditLogRepository, AuthorizationService authorizationService) {
         this.accountAuditLogRepository = accountAuditLogRepository;
@@ -34,6 +37,24 @@ public class AccountAuditLogService {
         log.setTargetUser(targetUser);
         log.setAction(action);
         log.setDetails(details);
+        return accountAuditLogRepository.save(log);
+    }
+
+    public AccountAuditLog recordChange(
+        User actor,
+        User targetUser,
+        AccountAuditAction action,
+        String details,
+        Object beforeState,
+        Object afterState
+    ) {
+        AccountAuditLog log = new AccountAuditLog();
+        log.setActor(actor);
+        log.setTargetUser(targetUser);
+        log.setAction(action);
+        log.setDetails(details);
+        log.setBeforeJson(toJson(beforeState));
+        log.setAfterJson(toJson(afterState));
         return accountAuditLogRepository.save(log);
     }
 
@@ -68,7 +89,9 @@ public class AccountAuditLogService {
                     cb.like(cb.lower(cb.coalesce(targetJoin.get("username"), "")), likeValue),
                     cb.like(cb.lower(cb.coalesce(targetJoin.get("fullName"), "")), likeValue),
                     cb.like(cb.lower(root.get("action").as(String.class)), likeValue),
-                    cb.like(cb.lower(cb.coalesce(root.get("details"), "")), likeValue)
+                    cb.like(cb.lower(cb.coalesce(root.get("details"), "")), likeValue),
+                    cb.like(cb.lower(cb.coalesce(root.get("beforeJson"), "")), likeValue),
+                    cb.like(cb.lower(cb.coalesce(root.get("afterJson"), "")), likeValue)
                 ));
             }
 
@@ -126,5 +149,27 @@ public class AccountAuditLogService {
 
     public List<String> getTargetUsernames() {
         return new LinkedHashSet<>(accountAuditLogRepository.findDistinctTargetUsernames()).stream().toList();
+    }
+
+    private String toJson(Object value) {
+        if (value == null) {
+            return null;
+        }
+        try {
+            return objectMapper.writeValueAsString(value);
+        } catch (JsonProcessingException ex) {
+            return "{\"snapshotError\":\"" + escapeJson(ex.getMessage()) + "\"}";
+        }
+    }
+
+    private String escapeJson(String value) {
+        if (value == null) {
+            return "";
+        }
+        return value
+            .replace("\\", "\\\\")
+            .replace("\"", "\\\"")
+            .replace("\n", "\\n")
+            .replace("\r", "\\r");
     }
 }

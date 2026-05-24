@@ -33,6 +33,28 @@ public interface InventoryTransactionRepository extends JpaRepository<InventoryT
     List<InventoryTransaction> findAllWithProductOrderByCreatedAtDesc();
 
     @org.springframework.data.jpa.repository.Query("""
+        SELECT tx
+        FROM InventoryTransaction tx
+        LEFT JOIN FETCH tx.product p
+        LEFT JOIN FETCH p.category
+        WHERE tx.createdAt > :createdAt
+        ORDER BY tx.createdAt DESC
+    """)
+    List<InventoryTransaction> findAllWithProductAfterOrderByCreatedAtDesc(
+        @org.springframework.data.repository.query.Param("createdAt") LocalDateTime createdAt
+    );
+
+    @org.springframework.data.jpa.repository.Query("""
+        SELECT tx
+        FROM InventoryTransaction tx
+        LEFT JOIN FETCH tx.product p
+        LEFT JOIN FETCH p.category
+        WHERE tx.quantityChange > 0
+        ORDER BY tx.createdAt DESC
+    """)
+    List<InventoryTransaction> findInboundWithProductOrderByCreatedAtDesc();
+
+    @org.springframework.data.jpa.repository.Query("""
         SELECT DISTINCT u.username
         FROM InventoryTransaction tx
         LEFT JOIN tx.user u

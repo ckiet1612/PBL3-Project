@@ -13,6 +13,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.Map;
 import java.util.Set;
 
 @Service
@@ -93,7 +95,14 @@ public class UserAccountService {
         user.setRole(role);
         user.setEnabled(true);
         User saved = userRepository.save(user);
-        accountAuditLogService.record(actor, saved, AccountAuditAction.CREATE_ACCOUNT, "Created account with role " + role);
+        accountAuditLogService.recordChange(
+            actor,
+            saved,
+            AccountAuditAction.CREATE_ACCOUNT,
+            "Created account with role " + role,
+            null,
+            userSnapshot(saved)
+        );
         return saved;
     }
 
@@ -101,6 +110,7 @@ public class UserAccountService {
     public User updateUserProfile(User actor, Long targetUserId, String username, String fullName) {
         authorizationService.requireAccountsAccess(actor);
         User target = getUserById(targetUserId);
+        Map<String, Object> beforeSnapshot = userSnapshot(target);
         validateUsername(username, target.getId());
         if (fullName == null || fullName.trim().isEmpty()) {
             throw new RuntimeException("Full name is required");
@@ -108,7 +118,14 @@ public class UserAccountService {
         target.setUsername(username.trim());
         target.setFullName(fullName.trim());
         User saved = userRepository.save(target);
-        accountAuditLogService.record(actor, saved, AccountAuditAction.UPDATE_PROFILE, "Updated account profile");
+        accountAuditLogService.recordChange(
+            actor,
+            saved,
+            AccountAuditAction.UPDATE_PROFILE,
+            "Updated account profile",
+            beforeSnapshot,
+            userSnapshot(saved)
+        );
         return saved;
     }
 
@@ -119,11 +136,19 @@ public class UserAccountService {
             throw new RuntimeException("Role is required");
         }
         User target = getUserById(targetUserId);
+        Map<String, Object> beforeSnapshot = userSnapshot(target);
         validateSelfRoleChange(actor, target, newRole);
         validateAdminRetention(target, target.isEnabled(), newRole);
         target.setRole(newRole);
         User saved = userRepository.save(target);
-        accountAuditLogService.record(actor, saved, AccountAuditAction.CHANGE_ROLE, "Changed role to " + newRole);
+        accountAuditLogService.recordChange(
+            actor,
+            saved,
+            AccountAuditAction.CHANGE_ROLE,
+            "Changed role to " + newRole,
+            beforeSnapshot,
+            userSnapshot(saved)
+        );
         return saved;
     }
 
@@ -131,15 +156,18 @@ public class UserAccountService {
     public User setUserEnabled(User actor, Long targetUserId, boolean enabled) {
         authorizationService.requireAccountsAccess(actor);
         User target = getUserById(targetUserId);
+        Map<String, Object> beforeSnapshot = userSnapshot(target);
         validateSelfDisable(actor, target, enabled);
         validateAdminRetention(target, enabled, target.getRole());
         target.setEnabled(enabled);
         User saved = userRepository.save(target);
-        accountAuditLogService.record(
+        accountAuditLogService.recordChange(
             actor,
             saved,
             enabled ? AccountAuditAction.ENABLE_ACCOUNT : AccountAuditAction.DISABLE_ACCOUNT,
-            enabled ? "Enabled account" : "Disabled account"
+            enabled ? "Enabled account" : "Disabled account",
+            beforeSnapshot,
+            userSnapshot(saved)
         );
         return saved;
     }
@@ -149,9 +177,17 @@ public class UserAccountService {
         authorizationService.requireAccountsAccess(actor);
         validatePassword(newPassword);
         User target = getUserById(targetUserId);
+        Map<String, Object> beforeSnapshot = userSnapshot(target);
         target.setPassword(passwordEncoder.encode(newPassword));
         User saved = userRepository.save(target);
-        accountAuditLogService.record(actor, saved, AccountAuditAction.RESET_PASSWORD, "Reset password");
+        accountAuditLogService.recordChange(
+            actor,
+            saved,
+            AccountAuditAction.RESET_PASSWORD,
+            "Reset password",
+            beforeSnapshot,
+            userSnapshot(saved, true)
+        );
         return saved;
     }
 
@@ -171,9 +207,17 @@ public class UserAccountService {
             throw new RuntimeException("Current password is incorrect");
         }
 
+        Map<String, Object> beforeSnapshot = userSnapshot(managedActor);
         managedActor.setPassword(passwordEncoder.encode(newPassword));
         User saved = userRepository.save(managedActor);
-        accountAuditLogService.record(saved, saved, AccountAuditAction.CHANGE_OWN_PASSWORD, "Changed own password");
+        accountAuditLogService.recordChange(
+            saved,
+            saved,
+            AccountAuditAction.CHANGE_OWN_PASSWORD,
+            "Changed own password",
+            beforeSnapshot,
+            userSnapshot(saved, true)
+        );
         return saved;
     }
 
@@ -230,5 +274,25 @@ public class UserAccountService {
         if (enabledAdmins <= 1) {
             throw new RuntimeException("The system must keep at least one enabled ADMIN");
         }
+    }
+
+    private Map<String, Object> userSnapshot(User user) {
+        return userSnapshot(user, false);
+    }
+
+    private Map<String, Object> userSnapshot(User user, boolean passwordChanged) {
+        if (user == null) {
+            return null;
+        }
+        Map<String, Object> snapshot = new LinkedHashMap<>();
+        snapshot.put("id", user.getId());
+        snapshot.put("username", user.getUsername());
+        snapshot.put("fullName", user.getFullName());
+        snapshot.put("role", user.getRole());
+        snapshot.put("enabled", user.isEnabled());
+        if (passwordChanged) {
+            snapshot.put("passwordChanged", true);
+        }
+        return snapshot;
     }
 }

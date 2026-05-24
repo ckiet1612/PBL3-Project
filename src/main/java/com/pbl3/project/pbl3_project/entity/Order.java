@@ -52,6 +52,10 @@ public class Order {
     @JoinColumn(name = "customer_id")
     private Customer customer;
 
+    @ManyToOne
+    @JoinColumn(name = "sales_shift_id")
+    private SalesShift salesShift;
+
     @Enumerated(EnumType.STRING)
     @JdbcTypeCode(SqlTypes.VARCHAR)
     @Column(nullable = false, length = 20)
@@ -73,6 +77,11 @@ public class Order {
     private String customerNameSnapshot;
 
     private String customerPhoneSnapshot;
+
+    @Column(length = 1024)
+    private String receiptFilePath;
+
+    private LocalDateTime receiptGeneratedAt;
 
     @OneToMany(mappedBy = "order", cascade = CascadeType.ALL)
     private List<OrderItem> orderItems;
@@ -118,6 +127,9 @@ public class Order {
     public Customer getCustomer() { return customer; }
     public void setCustomer(Customer customer) { this.customer = customer; }
 
+    public SalesShift getSalesShift() { return salesShift; }
+    public void setSalesShift(SalesShift salesShift) { this.salesShift = salesShift; }
+
     public PaymentMethod getPaymentMethod() { return paymentMethod; }
     public void setPaymentMethod(PaymentMethod paymentMethod) { this.paymentMethod = paymentMethod; }
 
@@ -138,6 +150,12 @@ public class Order {
 
     public String getCustomerPhoneSnapshot() { return customerPhoneSnapshot; }
     public void setCustomerPhoneSnapshot(String customerPhoneSnapshot) { this.customerPhoneSnapshot = customerPhoneSnapshot; }
+
+    public String getReceiptFilePath() { return receiptFilePath; }
+    public void setReceiptFilePath(String receiptFilePath) { this.receiptFilePath = receiptFilePath; }
+
+    public LocalDateTime getReceiptGeneratedAt() { return receiptGeneratedAt; }
+    public void setReceiptGeneratedAt(LocalDateTime receiptGeneratedAt) { this.receiptGeneratedAt = receiptGeneratedAt; }
 
     public List<OrderItem> getOrderItems() { return orderItems; }
     public void setOrderItems(List<OrderItem> orderItems) { this.orderItems = orderItems; }

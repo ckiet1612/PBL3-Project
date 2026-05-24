@@ -86,7 +86,7 @@ class UserUiPreferencesServiceTest {
         assertTrue(saved.isReducedMotion());
         assertTrue(saved.isSidebarCollapsedByDefault());
         assertTrue(saved.getDashboardSectionOrder().startsWith("TOP_SELLING,KPI_ROW"));
-        assertEquals("WHAT_CHANGED,LOW_STOCK", saved.getDashboardHiddenSections());
+        assertEquals("WHAT_CHANGED", saved.getDashboardHiddenSections());
 
         ArgumentCaptor<UserUiPreferences> captor = ArgumentCaptor.forClass(UserUiPreferences.class);
         verify(userUiPreferencesRepository).save(captor.capture());
@@ -134,7 +134,7 @@ class UserUiPreferencesServiceTest {
             userUiPreferencesService.getDefaultDashboardOrder().size(),
             new LinkedHashSet<>(resolvedOrder).size()
         );
-        assertEquals(Set.of(DashboardSectionKey.LOW_STOCK, DashboardSectionKey.ACTION_CENTER), resolvedHidden);
+        assertEquals(Set.of(DashboardSectionKey.ACTION_CENTER), resolvedHidden);
     }
 
     private User user(Long id, Role role) {

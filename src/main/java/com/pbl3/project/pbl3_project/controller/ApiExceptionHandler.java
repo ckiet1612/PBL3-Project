@@ -1,5 +1,6 @@
 package com.pbl3.project.pbl3_project.controller;
 
+import com.pbl3.project.pbl3_project.service.ApiAuthenticationException;
 import com.pbl3.project.pbl3_project.service.AuthorizationException;
 import com.pbl3.project.pbl3_project.service.ConcurrencyConflictException;
 import com.pbl3.project.pbl3_project.service.StaleStocktakeSessionException;
@@ -12,6 +13,11 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 @RestControllerAdvice
 public class ApiExceptionHandler {
+
+    @ExceptionHandler(ApiAuthenticationException.class)
+    public ResponseEntity<ApiError> handleAuthentication(ApiAuthenticationException ex) {
+        return build(HttpStatus.UNAUTHORIZED, "authentication_error", ex.getMessage());
+    }
 
     @ExceptionHandler(AuthorizationException.class)
     public ResponseEntity<ApiError> handleAuthorization(AuthorizationException ex) {

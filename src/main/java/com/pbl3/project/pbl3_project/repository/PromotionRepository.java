@@ -58,6 +58,15 @@ public interface PromotionRepository extends JpaRepository<Promotion, Long>, Jpa
     List<Promotion> findAllActiveAt(@org.springframework.data.repository.query.Param("at") LocalDateTime at);
 
     @Query("""
+        SELECT p
+        FROM Promotion p
+        WHERE p.enabled = true
+          AND p.endsAt IS NOT NULL
+          AND p.endsAt <= :endsBefore
+    """)
+    List<Promotion> findEnabledEndingBefore(@org.springframework.data.repository.query.Param("endsBefore") LocalDateTime endsBefore);
+
+    @Query("""
         SELECT COUNT(p)
         FROM Promotion p
         WHERE p.scope = :scope

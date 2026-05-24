@@ -73,6 +73,14 @@ public class AuthorizationService {
         requireAnyRole(user, "You are not allowed to access Sales", Role.ADMIN, Role.MANAGER, Role.STAFF);
     }
 
+    public void requireSalesShiftAccess(User user) {
+        requireSalesAccess(user);
+    }
+
+    public void requireSalesShiftManagerAccess(User user) {
+        requireAnyRole(user, "Only managers and admins can manage other users' shifts", Role.ADMIN, Role.MANAGER);
+    }
+
     public void requireSettingsAccess(User user) {
         if (user == null || !user.isEnabled()) {
             throw new AuthorizationException("You are not allowed to access Settings");
@@ -81,6 +89,10 @@ public class AuthorizationService {
 
     public void requireSettingsEdit(User user) {
         requireSettingsAccess(user);
+    }
+
+    public void requireDataBackupAccess(User user) {
+        requireAnyRole(user, "Only admins can export or restore backups", Role.ADMIN);
     }
 
     public void requireProductWrite(User user) {
@@ -132,6 +144,8 @@ public class AuthorizationService {
     public boolean canAccessStocktake(User user) { return hasAnyRole(user, Role.ADMIN, Role.MANAGER); }
     public boolean canAccessAccounts(User user) { return hasAnyRole(user, Role.ADMIN); }
     public boolean canAccessSales(User user) { return hasAnyRole(user, Role.ADMIN, Role.MANAGER, Role.STAFF); }
+    public boolean canAccessSalesShifts(User user) { return canAccessSales(user); }
+    public boolean canManageAllSalesShifts(User user) { return hasAnyRole(user, Role.ADMIN, Role.MANAGER); }
     public boolean canAccessOrderHistory(User user) { return hasAnyRole(user, Role.ADMIN, Role.MANAGER, Role.STAFF); }
     public boolean canAccessReturnsRefunds(User user) { return hasAnyRole(user, Role.ADMIN, Role.MANAGER, Role.STAFF); }
     public boolean canAccessExpenses(User user) { return hasAnyRole(user, Role.ADMIN, Role.MANAGER); }
@@ -139,6 +153,7 @@ public class AuthorizationService {
     public boolean canAccessCustomers(User user) { return hasAnyRole(user, Role.ADMIN, Role.MANAGER); }
     public boolean canAccessSettings(User user) { return user != null && user.isEnabled(); }
     public boolean canEditSettings(User user) { return canAccessSettings(user); }
+    public boolean canAccessDataBackup(User user) { return hasAnyRole(user, Role.ADMIN); }
     public boolean canDeleteProducts(User user) { return hasAnyRole(user, Role.ADMIN); }
     public boolean canWriteProducts(User user) { return hasAnyRole(user, Role.ADMIN, Role.MANAGER); }
     public boolean canWriteExpenses(User user) { return hasAnyRole(user, Role.ADMIN, Role.MANAGER); }

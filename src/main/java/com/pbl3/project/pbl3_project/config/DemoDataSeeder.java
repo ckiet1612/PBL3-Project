@@ -41,6 +41,7 @@ import com.pbl3.project.pbl3_project.service.ImportOrderService;
 import com.pbl3.project.pbl3_project.service.MoneySupport;
 import com.pbl3.project.pbl3_project.service.OrderService;
 import org.springframework.boot.CommandLineRunner;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
@@ -61,6 +62,7 @@ import java.util.Random;
 
 @Configuration
 @Profile("demo")
+@ConditionalOnProperty(name = "app.demo.seed", havingValue = "true")
 public class DemoDataSeeder {
     private static final long DEMO_RANDOM_SEED = 20260415L;
     private static final int HISTORICAL_DAYS = 365;
@@ -523,7 +525,7 @@ public class DemoDataSeeder {
             new OrderLine(sparklingWater, 5), new OrderLine(chocolateBar, 2));
         createCompletedOrderAt(manager, minhKhoa, at(anchorDate, 18, 14, 0), PaymentMethod.CARD,
             new OrderLine(sparklingWater, 4), new OrderLine(energyDrink, 2));
-        createCompletedOrderAt(staff, thuyVan, at(anchorDate, 17, 10, 20), PaymentMethod.TRANSFER,
+        createCompletedOrderAt(staff, thuyVan, at(anchorDate, 17, 10, 20), PaymentMethod.QR,
             new OrderLine(chocolateBar, 3), new OrderLine(notebook, 1));
         createCompletedOrderAt(manager, quocBao, at(anchorDate, 16, 16, 10), PaymentMethod.CASH,
             new OrderLine(detergent, 1));
@@ -532,25 +534,25 @@ public class DemoDataSeeder {
             new OrderLine(sparklingWater, 8), new OrderLine(chocolateBar, 3));
         createCompletedOrderAt(manager, minhKhoa, at(anchorDate, 12, 11, 5), PaymentMethod.CARD,
             new OrderLine(oatMilk, 4), new OrderLine(sparklingWater, 6));
-        createCompletedOrderAt(staff, thuyVan, at(anchorDate, 11, 15, 40), PaymentMethod.TRANSFER,
+        createCompletedOrderAt(staff, thuyVan, at(anchorDate, 11, 15, 40), PaymentMethod.QR,
             new OrderLine(chocolateBar, 4), new OrderLine(notebook, 2), new OrderLine(sparklingWater, 3));
         createCompletedOrderAt(manager, quocBao, at(anchorDate, 10, 17, 25), PaymentMethod.CARD,
             new OrderLine(sparklingWater, 7), new OrderLine(energyDrink, 2), new OrderLine(chocolateBar, 2));
         createCompletedOrderAt(staff, lanAnh, at(anchorDate, 9, 9, 45), PaymentMethod.CASH,
             new OrderLine(oatMilk, 3), new OrderLine(sparklingWater, 8));
-        createCompletedOrderAt(manager, minhKhoa, at(anchorDate, 8, 13, 10), PaymentMethod.TRANSFER,
+        createCompletedOrderAt(manager, minhKhoa, at(anchorDate, 8, 13, 10), PaymentMethod.QR,
             new OrderLine(detergent, 1), new OrderLine(notebook, 1), new OrderLine(chocolateBar, 3));
         createCompletedOrderAt(staff, thuyVan, at(anchorDate, 7, 11, 20), PaymentMethod.CASH,
             new OrderLine(sparklingWater, 6), new OrderLine(oatMilk, 4));
         createCompletedOrderAt(manager, quocBao, at(anchorDate, 6, 16, 50), PaymentMethod.CARD,
             new OrderLine(chocolateBar, 4), new OrderLine(energyDrink, 2), new OrderLine(sparklingWater, 4));
-        createCompletedOrderAt(staff, lanAnh, at(anchorDate, 5, 15, 30), PaymentMethod.TRANSFER,
+        createCompletedOrderAt(staff, lanAnh, at(anchorDate, 5, 15, 30), PaymentMethod.QR,
             new OrderLine(sparklingWater, 9), new OrderLine(oatMilk, 5));
         createCompletedOrderAt(manager, minhKhoa, at(anchorDate, 4, 18, 5), PaymentMethod.CASH,
             new OrderLine(sparklingWater, 7), new OrderLine(notebook, 2), new OrderLine(detergent, 1));
         createCompletedOrderAt(staff, thuyVan, at(anchorDate, 3, 12, 40), PaymentMethod.CARD,
             new OrderLine(oatMilk, 6), new OrderLine(chocolateBar, 5));
-        createCompletedOrderAt(manager, quocBao, at(anchorDate, 2, 17, 35), PaymentMethod.TRANSFER,
+        createCompletedOrderAt(manager, quocBao, at(anchorDate, 2, 17, 35), PaymentMethod.QR,
             new OrderLine(sparklingWater, 10), new OrderLine(oatMilk, 5), new OrderLine(energyDrink, 3));
 
         createCompletedOrderAt(staff, lanAnh, at(anchorDate, 1, 9, 10), PaymentMethod.CASH,
@@ -561,7 +563,7 @@ public class DemoDataSeeder {
             new OrderLine(oatMilk, 5), new OrderLine(notebook, 2));
         createCompletedOrderAt(manager, quocBao, at(anchorDate, 1, 13, 45), PaymentMethod.CASH,
             new OrderLine(chocolateBar, 4), new OrderLine(detergent, 1));
-        createCompletedOrderAt(staff, lanAnh, at(anchorDate, 1, 15, 5), PaymentMethod.TRANSFER,
+        createCompletedOrderAt(staff, lanAnh, at(anchorDate, 1, 15, 5), PaymentMethod.QR,
             new OrderLine(sparklingWater, 4), new OrderLine(energyDrink, 1));
         createCompletedOrderAt(manager, minhKhoa, at(anchorDate, 1, 18, 25), PaymentMethod.CARD,
             new OrderLine(sparklingWater, 3), new OrderLine(oatMilk, 3));
@@ -997,7 +999,7 @@ public class DemoDataSeeder {
         if (roll < 0.79) {
             return PaymentMethod.CARD;
         }
-        return PaymentMethod.TRANSFER;
+        return PaymentMethod.QR;
     }
 
     private boolean shouldCreateCanceledOrder(LocalDate date, Random random) {

@@ -28,8 +28,7 @@ public class UserUiPreferencesService {
         DashboardSectionKey.ORDERS_CHART,
         DashboardSectionKey.CANCELED_ORDERS_CHART,
         DashboardSectionKey.PAYMENT_METHOD_SHARE,
-        DashboardSectionKey.TOP_SELLING,
-        DashboardSectionKey.LOW_STOCK
+        DashboardSectionKey.TOP_SELLING
     );
 
     private final UserUiPreferencesRepository userUiPreferencesRepository;

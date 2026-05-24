@@ -3,6 +3,7 @@ package com.pbl3.project.pbl3_project.repository;
 import com.pbl3.project.pbl3_project.dto.IdLabelOption;
 import com.pbl3.project.pbl3_project.dto.report.ExpenseCategorySummaryRow;
 import com.pbl3.project.pbl3_project.entity.Expense;
+import com.pbl3.project.pbl3_project.entity.PaymentMethod;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
@@ -10,6 +11,7 @@ import org.springframework.stereotype.Repository;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Repository
@@ -66,4 +68,32 @@ public interface ExpenseRepository extends JpaRepository<Expense, Long>, JpaSpec
         WHERE e.createdBy IS NOT NULL
     """)
     List<IdLabelOption> findDistinctCreatorOptions();
+
+    @Query("""
+        SELECT COALESCE(SUM(e.amount), 0)
+        FROM Expense e
+        WHERE e.createdBy.id = :userId
+          AND e.createdAt >= :start
+          AND e.createdAt <= :end
+    """)
+    BigDecimal sumAmountCreatedByUserBetween(
+        @org.springframework.data.repository.query.Param("userId") Long userId,
+        @org.springframework.data.repository.query.Param("start") LocalDateTime start,
+        @org.springframework.data.repository.query.Param("end") LocalDateTime end
+    );
+
+    @Query("""
+        SELECT COALESCE(SUM(e.amount), 0)
+        FROM Expense e
+        WHERE e.createdBy.id = :userId
+          AND e.createdAt >= :start
+          AND e.createdAt <= :end
+          AND e.paymentMethod = :paymentMethod
+    """)
+    BigDecimal sumAmountCreatedByUserBetweenAndPaymentMethod(
+        @org.springframework.data.repository.query.Param("userId") Long userId,
+        @org.springframework.data.repository.query.Param("start") LocalDateTime start,
+        @org.springframework.data.repository.query.Param("end") LocalDateTime end,
+        @org.springframework.data.repository.query.Param("paymentMethod") PaymentMethod paymentMethod
+    );
 }
