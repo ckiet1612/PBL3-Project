@@ -40,10 +40,10 @@ public final class ResponsiveSceneSupport {
         root.getStyleClass().removeAll(RESPONSIVE_CLASSES);
         double height = scene.getHeight();
         double width = scene.getWidth();
-        if (height > 0 && height <= 840) {
+        if (height > 0 && height <= 780) {
             root.getStyleClass().add(SHORT_HEIGHT_CLASS);
         }
-        if (height > 0 && height <= 740) {
+        if (height > 0 && height <= 700) {
             root.getStyleClass().add(VERY_SHORT_HEIGHT_CLASS);
         }
         if (width > 0 && width <= 1180) {
