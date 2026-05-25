@@ -17,6 +17,7 @@ import com.pbl3.project.pbl3_project.ui.shell.MainSceneRouter;
 import com.pbl3.project.pbl3_project.ui.shell.VersionGateSceneFactory;
 import com.pbl3.project.pbl3_project.ui.bootstrap.TenantBootstrapStore;
 import com.pbl3.project.pbl3_project.ui.util.DialogSupport;
+import com.pbl3.project.pbl3_project.ui.util.ResponsiveSceneSupport;
 import com.pbl3.project.pbl3_project.ui.util.UiTaskExecutor;
 import com.pbl3.project.pbl3_project.ui.scene.model.ImportOrderPrefill;
 import com.pbl3.project.pbl3_project.ui.scene.model.ProductViewPreset;
@@ -115,6 +116,7 @@ public class MainStageCoordinator implements ApplicationListener<PrimaryStageRea
         if (!scene.getStylesheets().contains(stylesheet)) {
             scene.getStylesheets().add(stylesheet);
         }
+        ResponsiveSceneSupport.install(scene);
     }
 
     private javafx.scene.layout.BorderPane resolveMainLayout(Scene scene) {

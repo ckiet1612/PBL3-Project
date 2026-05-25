@@ -7,11 +7,13 @@ import javafx.animation.FadeTransition;
 import javafx.animation.Interpolator;
 import javafx.animation.ParallelTransition;
 import javafx.animation.TranslateTransition;
+import javafx.geometry.Rectangle2D;
 import javafx.geometry.Insets;
 import javafx.scene.Node;
 import javafx.scene.Scene;
 import javafx.scene.control.Label;
 import javafx.scene.layout.BorderPane;
+import javafx.stage.Screen;
 import javafx.stage.Stage;
 import javafx.util.Duration;
 
@@ -50,14 +52,15 @@ public final class MainSceneRouter {
         BorderPane layout = route.mainLayoutFactory().get();
         layout.setUserData("MAIN_LAYOUT");
 
-        Scene newScene = new Scene(layout, route.defaultWidth(), route.defaultHeight());
+        WindowSize windowSize = fitToCurrentScreen(route.stage(), route.defaultWidth(), route.defaultHeight());
+        Scene newScene = new Scene(layout, windowSize.width(), windowSize.height());
         if (route.sceneInitializer() != null) {
             route.sceneInitializer().accept(newScene);
         }
 
         route.stage().setScene(newScene);
-        route.stage().setWidth(route.defaultWidth());
-        route.stage().setHeight(route.defaultHeight());
+        route.stage().setWidth(windowSize.width());
+        route.stage().setHeight(windowSize.height());
         route.stage().centerOnScreen();
     }
 
@@ -86,14 +89,15 @@ public final class MainSceneRouter {
         BorderPane layout = route.mainLayoutFactory().get();
         layout.setUserData("MAIN_LAYOUT");
 
-        Scene newScene = new Scene(layout, route.defaultWidth(), route.defaultHeight());
+        WindowSize windowSize = fitToCurrentScreen(route.stage(), route.defaultWidth(), route.defaultHeight());
+        Scene newScene = new Scene(layout, windowSize.width(), windowSize.height());
         if (route.sceneInitializer() != null) {
             route.sceneInitializer().accept(newScene);
         }
 
         route.stage().setScene(newScene);
-        route.stage().setWidth(route.defaultWidth());
-        route.stage().setHeight(route.defaultHeight());
+        route.stage().setWidth(windowSize.width());
+        route.stage().setHeight(windowSize.height());
         route.stage().centerOnScreen();
 
         if (reducedMotion) {
@@ -119,5 +123,26 @@ public final class MainSceneRouter {
     private void resetMotionState(Node node) {
         node.setTranslateY(0.0);
         node.setOpacity(1.0);
+    }
+
+    private WindowSize fitToCurrentScreen(Stage stage, double defaultWidth, double defaultHeight) {
+        Rectangle2D visualBounds = resolveScreenBounds(stage);
+        double width = Math.min(defaultWidth, Math.max(760, visualBounds.getWidth() - 48));
+        double height = Math.min(defaultHeight, Math.max(560, visualBounds.getHeight() - 64));
+        return new WindowSize(width, height);
+    }
+
+    private Rectangle2D resolveScreenBounds(Stage stage) {
+        if (stage != null && stage.isShowing()) {
+            return Screen.getScreensForRectangle(stage.getX(), stage.getY(), stage.getWidth(), stage.getHeight())
+                .stream()
+                .findFirst()
+                .orElse(Screen.getPrimary())
+                .getVisualBounds();
+        }
+        return Screen.getPrimary().getVisualBounds();
+    }
+
+    private record WindowSize(double width, double height) {
     }
 }
