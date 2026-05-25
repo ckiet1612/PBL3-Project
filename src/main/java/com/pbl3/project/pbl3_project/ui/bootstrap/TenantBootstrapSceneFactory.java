@@ -1,6 +1,7 @@
 package com.pbl3.project.pbl3_project.ui.bootstrap;
 
 import com.pbl3.project.pbl3_project.ui.util.DialogSupport;
+import com.pbl3.project.pbl3_project.ui.util.ResponsiveSceneSupport;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import javafx.animation.PauseTransition;
@@ -762,6 +763,7 @@ public final class TenantBootstrapSceneFactory {
         if (!scene.getStylesheets().contains(stylesheet)) {
             scene.getStylesheets().add(stylesheet);
         }
+        ResponsiveSceneSupport.install(scene);
     }
 
     private void loadBootstrapFonts() {

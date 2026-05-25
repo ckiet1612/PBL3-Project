@@ -332,7 +332,7 @@ public final class MainShellFactory {
 
     private HBox createHeader(Context context, BorderPane root, VBox sidebar, UserUiPreferences preferences) {
         HBox header = new HBox(10);
-        header.setStyle("-fx-background-color: -app-surface; -fx-padding: 15; -fx-effect: dropshadow(three-pass-box, -app-shadow, 0, 5, 0, 0);");
+        header.getStyleClass().add("app-header");
         header.setAlignment(Pos.CENTER_LEFT);
 
         boolean[] sidebarHidden = {false};
