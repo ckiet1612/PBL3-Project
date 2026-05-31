@@ -3,7 +3,6 @@ package com.pbl3.project.pbl3_project.ui.shell;
 import com.pbl3.project.pbl3_project.entity.User;
 import com.pbl3.project.pbl3_project.service.AuthService;
 import com.pbl3.project.pbl3_project.service.ToastService;
-import com.pbl3.project.pbl3_project.ui.util.ResponsiveSceneSupport;
 import java.net.URL;
 import java.util.function.Consumer;
 import javafx.animation.ScaleTransition;
@@ -473,6 +472,5 @@ public final class LoginSceneFactory {
         if (!scene.getStylesheets().contains(stylesheet)) {
             scene.getStylesheets().add(stylesheet);
         }
-        ResponsiveSceneSupport.install(scene);
     }
 }

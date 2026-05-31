@@ -1,7 +1,6 @@
 package com.pbl3.project.pbl3_project.ui.shell;
 
 import com.pbl3.project.pbl3_project.service.ApplicationVersionService;
-import com.pbl3.project.pbl3_project.ui.util.ResponsiveSceneSupport;
 import javafx.application.Platform;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
@@ -97,6 +96,5 @@ public final class VersionGateSceneFactory {
         if (!scene.getStylesheets().contains(stylesheet)) {
             scene.getStylesheets().add(stylesheet);
         }
-        ResponsiveSceneSupport.install(scene);
     }
 }
