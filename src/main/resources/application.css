@@ -140,6 +140,29 @@
     -fx-cell-size: 38;
 }
 
+.app-header {
+    -fx-background-color: -app-surface;
+    -fx-padding: 15;
+    -fx-effect: dropshadow(three-pass-box, -app-shadow, 0, 5, 0, 0);
+}
+
+.app-viewport-short .app-header {
+    -fx-padding: 10 12;
+}
+
+.app-viewport-very-short .app-header {
+    -fx-padding: 8 10;
+}
+
+.app-viewport-short .header-label {
+    -fx-font-size: 20px;
+    -fx-padding: 2 8 2 0;
+}
+
+.app-viewport-very-short .header-label {
+    -fx-font-size: 18px;
+}
+
 .ui-reduced-motion .primary-button:hover,
 .ui-reduced-motion .sidebar .nav-button:pressed,
 .ui-reduced-motion .sidebar .nav-button.active:pressed,
@@ -553,6 +576,45 @@
     -fx-scale-x: 0.95;
     -fx-scale-y: 0.95;
     -fx-effect: dropshadow(three-pass-box, -app-shadow, 2, 0, 0, 1);
+}
+
+.app-viewport-short .sidebar {
+    -fx-padding: 14 12;
+    -fx-spacing: 8;
+}
+
+.app-viewport-short .sidebar-section {
+    -fx-spacing: 4;
+}
+
+.app-viewport-short .sidebar-section-content {
+    -fx-spacing: 3;
+    -fx-padding: 0 0 0 8;
+}
+
+.app-viewport-short .sidebar-section-header,
+.app-viewport-short .sidebar .nav-button,
+.app-viewport-short .sidebar .nav-logout-btn {
+    -fx-min-height: 38;
+    -fx-pref-height: 38;
+    -fx-max-height: 38;
+    -fx-font-size: 13px;
+    -fx-padding: 8 12;
+}
+
+.app-viewport-very-short .sidebar {
+    -fx-padding: 10;
+    -fx-spacing: 6;
+}
+
+.app-viewport-very-short .sidebar-section-header,
+.app-viewport-very-short .sidebar .nav-button,
+.app-viewport-very-short .sidebar .nav-logout-btn {
+    -fx-min-height: 34;
+    -fx-pref-height: 34;
+    -fx-max-height: 34;
+    -fx-font-size: 12px;
+    -fx-padding: 6 10;
 }
 
 /* Text inputs */
@@ -3502,6 +3564,79 @@
     -fx-padding: 18;
 }
 
+.app-viewport-short .pos-browser-pane,
+.app-viewport-short .pos-cart-pane {
+    -fx-padding: 14;
+    -fx-spacing: 10;
+}
+
+.app-viewport-short .pos-search-field {
+    -fx-padding: 8 0;
+}
+
+.app-viewport-short .pos-category-bar {
+    -fx-padding: 0 0 2 0;
+}
+
+.app-viewport-short .pos-category-chip {
+    -fx-padding: 6 11;
+    -fx-font-size: 12px;
+}
+
+.app-viewport-short .pos-product-card {
+    -fx-padding: 12;
+    -fx-spacing: 8;
+}
+
+.app-viewport-short .pos-product-hero {
+    -fx-min-height: 68;
+    -fx-padding: 10;
+}
+
+.app-viewport-short .pos-product-initial {
+    -fx-font-size: 24px;
+}
+
+.app-viewport-short .pos-product-price {
+    -fx-font-size: 16px;
+}
+
+.app-viewport-short .pos-product-add-button {
+    -fx-padding: 8 12;
+}
+
+.app-viewport-short .pos-customer-card,
+.app-viewport-short .pos-cart-row,
+.app-viewport-short .pos-cart-summary,
+.app-viewport-short .pos-empty-state,
+.app-viewport-short .pos-cart-empty {
+    -fx-padding: 10;
+}
+
+.app-viewport-short .pos-checkout-button {
+    -fx-padding: 11 14;
+}
+
+.app-viewport-very-short .pos-browser-pane,
+.app-viewport-very-short .pos-cart-pane {
+    -fx-padding: 10;
+    -fx-spacing: 8;
+}
+
+.app-viewport-very-short .pos-product-hero {
+    -fx-min-height: 56;
+}
+
+.app-viewport-very-short .pos-product-card {
+    -fx-padding: 10;
+    -fx-spacing: 6;
+}
+
+.app-viewport-very-short .pos-customer-name,
+.app-viewport-very-short .pos-summary-value {
+    -fx-font-size: 15px;
+}
+
 .pos-empty-title {
     -fx-font-size: 15px;
     -fx-font-weight: 700;
@@ -4350,6 +4485,51 @@
 .ui-reduced-motion .login-submit-button:hover {
     -fx-scale-x: 1;
     -fx-scale-y: 1;
+}
+
+.app-viewport-short .login-brand-panel {
+    -fx-padding: 28 30;
+}
+
+.app-viewport-short .login-form-panel {
+    -fx-padding: 44 44 32 44;
+}
+
+.app-viewport-short .login-brand-mark {
+    -fx-min-width: 54;
+    -fx-pref-width: 54;
+    -fx-max-width: 54;
+    -fx-min-height: 54;
+    -fx-pref-height: 54;
+    -fx-max-height: 54;
+}
+
+.app-viewport-short .login-brand-title {
+    -fx-font-size: 30px;
+}
+
+.app-viewport-short .login-feature-row {
+    -fx-padding: 6 0;
+}
+
+.app-viewport-short .login-title {
+    -fx-font-size: 27px;
+}
+
+.app-viewport-short .login-submit-button {
+    -fx-padding: 11 16;
+}
+
+.app-viewport-very-short .login-brand-panel {
+    -fx-padding: 20 26;
+}
+
+.app-viewport-very-short .login-form-panel {
+    -fx-padding: 32 40 26 40;
+}
+
+.app-viewport-very-short .login-feature-row {
+    -fx-padding: 4 0;
 }
 
 /* Products workspace */
@@ -5850,6 +6030,61 @@
     -fx-font-weight: 800;
     -fx-min-height: 34;
     -fx-pref-height: 34;
+}
+
+.app-viewport-short .tenant-bootstrap-brand-panel {
+    -fx-padding: 28 30;
+}
+
+.app-viewport-short .tenant-bootstrap-form-panel {
+    -fx-padding: 42 42 32 42;
+}
+
+.app-viewport-short .tenant-bootstrap-workspace-form-panel {
+    -fx-padding: 64 42 32 42;
+}
+
+.app-viewport-short .tenant-bootstrap-brand-mark {
+    -fx-min-width: 54;
+    -fx-pref-width: 54;
+    -fx-max-width: 54;
+    -fx-min-height: 54;
+    -fx-pref-height: 54;
+    -fx-max-height: 54;
+}
+
+.app-viewport-short .tenant-bootstrap-brand-title,
+.app-viewport-short .tenant-bootstrap-form-title {
+    -fx-font-size: 28px;
+}
+
+.app-viewport-short .tenant-bootstrap-feature-row {
+    -fx-padding: 5 0;
+}
+
+.app-viewport-short .tenant-bootstrap-input {
+    -fx-min-height: 40;
+    -fx-pref-height: 40;
+}
+
+.app-viewport-short .tenant-bootstrap-primary-button {
+    -fx-pref-height: 42;
+}
+
+.app-viewport-very-short .tenant-bootstrap-brand-panel {
+    -fx-padding: 20 26;
+}
+
+.app-viewport-very-short .tenant-bootstrap-form-panel {
+    -fx-padding: 30 38 26 38;
+}
+
+.app-viewport-very-short .tenant-bootstrap-workspace-form-panel {
+    -fx-padding: 46 38 26 38;
+}
+
+.app-viewport-very-short .tenant-bootstrap-form-title {
+    -fx-font-size: 26px;
 }
 
 .tenant-bootstrap-error {
