@@ -51,6 +51,7 @@ public final class FilterDisclosureSection {
         this.contentWrapper = new StackPane(this.contentRegion);
         this.contentWrapper.setMaxWidth(Double.MAX_VALUE);
         this.contentWrapper.setMinHeight(0);
+        StackPane.setAlignment(this.contentRegion, Pos.TOP_LEFT);
 
         Rectangle clip = new Rectangle();
         clip.widthProperty().bind(contentWrapper.widthProperty());
@@ -132,6 +133,10 @@ public final class FilterDisclosureSection {
         contentRegion.applyCss();
         double width = contentRegion.getWidth() > 0.0 ? contentRegion.getWidth() : 300.0;
         double prefHeight = contentRegion.prefHeight(width);
+        double maxHeight = contentRegion.getMaxHeight();
+        if (maxHeight > 0.0 && maxHeight < Double.MAX_VALUE) {
+            prefHeight = Math.min(prefHeight, maxHeight);
+        }
         return Math.max(0.0, prefHeight);
     }
 }

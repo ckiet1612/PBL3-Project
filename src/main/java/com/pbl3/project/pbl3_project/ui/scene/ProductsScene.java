@@ -42,6 +42,12 @@ import javafx.util.Duration;
 
 public final class ProductsScene {
     private static final Color PRIMARY_COLOR = Color.web("#1d7df2");
+    private static final double PRODUCT_FILTER_BUTTON_SIZE = 42;
+    private static final double PRODUCT_FILTER_POPUP_WIDTH = 360;
+    private static final double PRODUCT_FILTER_POPUP_VIEWPORT_HEIGHT = 330;
+    private static final double PRODUCT_FILTER_POPUP_X_OFFSET = PRODUCT_FILTER_BUTTON_SIZE - PRODUCT_FILTER_POPUP_WIDTH;
+    private static final double PRODUCT_FILTER_POPUP_Y_OFFSET = 5;
+    private static final double PRODUCT_FILTER_SLIDER_WIDTH = 290;
 
     private enum ProductCatalogScope {
         ALL,
@@ -621,6 +627,7 @@ public final class ProductsScene {
         javafx.stage.Popup filterPopup = new javafx.stage.Popup();
         filterPopup.setAutoHide(true);
         filterButton.setOnAction(event -> {
+            event.consume();
             if (filterPopup.isShowing()) {
                 filterPopup.hide();
                 return;
@@ -637,7 +644,10 @@ public final class ProductsScene {
                 if (maxPrice <= 0) maxPrice = 1000;
                 if (maxQty <= 0) maxQty = 100;
 
-                FilterControlFactory.Shell shell = FilterControlFactory.shell(340, 330);
+                FilterControlFactory.Shell shell = FilterControlFactory.shell(
+                    PRODUCT_FILTER_POPUP_WIDTH,
+                    PRODUCT_FILTER_POPUP_VIEWPORT_HEIGHT
+                );
                 Label brandTitle = FilterControlFactory.sectionTitle("Brands");
                 javafx.scene.control.CheckBox allBrandsCb = new javafx.scene.control.CheckBox("All Brands");
                 allBrandsCb.setSelected(productBrandsRef.get().isEmpty());
@@ -646,41 +656,57 @@ public final class ProductsScene {
                 VBox brandCheckboxes = new VBox(6);
                 brandCheckboxes.setPadding(new Insets(5, 5, 5, 10));
                 java.util.List<javafx.scene.control.CheckBox> brandCbs = new java.util.ArrayList<>();
+                boolean[] syncingBrandSelection = {false};
                 java.util.Set<String> brands = filterOptions.brandNames();
                 java.util.Set<String> selectedBrands = productBrandsRef.get();
                 for (String brandName : brands) {
                     javafx.scene.control.CheckBox cb = new javafx.scene.control.CheckBox(brandName);
                     cb.setSelected(selectedBrands.isEmpty() || selectedBrands.contains(brandName));
                     cb.setStyle("-fx-font-size: 13px; -fx-text-fill: -app-text-secondary; -fx-cursor: hand;");
-                    cb.selectedProperty().addListener((obs, ov, nv) -> allBrandsCb.setSelected(brandCbs.stream().allMatch(javafx.scene.control.CheckBox::isSelected)));
+                    cb.selectedProperty().addListener((obs, ov, nv) -> {
+                        if (!syncingBrandSelection[0]) {
+                            allBrandsCb.setSelected(brandCbs.stream().allMatch(javafx.scene.control.CheckBox::isSelected));
+                        }
+                    });
                     brandCbs.add(cb);
                     brandCheckboxes.getChildren().add(cb);
                 }
-                allBrandsCb.setOnAction(ae -> brandCbs.forEach(cb -> cb.setSelected(allBrandsCb.isSelected())));
+                allBrandsCb.setOnAction(ae -> {
+                    boolean selected = allBrandsCb.isSelected();
+                    syncingBrandSelection[0] = true;
+                    brandCbs.forEach(cb -> cb.setSelected(selected));
+                    syncingBrandSelection[0] = false;
+                    allBrandsCb.setSelected(selected);
+                });
 
                 javafx.scene.control.ScrollPane brandScroll = new javafx.scene.control.ScrollPane(brandCheckboxes);
                 brandScroll.setFitToWidth(true);
                 brandScroll.setMaxHeight(120);
                 brandScroll.setStyle("-fx-background-color: transparent; -fx-background: -app-surface; -fx-border-color: -app-border; -fx-border-radius: 8;");
                 FilterDisclosureSection brandSection = new FilterDisclosureSection(allBrandsCb, brandScroll);
+                brandSection.setExpanded(!selectedBrands.isEmpty());
 
-                double initialMinPrice = productMinPriceRef.get() == null ? 0 : productMinPriceRef.get().doubleValue();
-                double initialMaxPrice = productMaxPriceRef.get() == null ? maxPrice : productMaxPriceRef.get().doubleValue();
-                initialMaxPrice = Math.max(initialMinPrice, Math.min(initialMaxPrice, maxPrice));
+                double initialMinPrice = productMinPriceRef.get() == null
+                    ? 0
+                    : clampRangeValue(productMinPriceRef.get().doubleValue(), 0, maxPrice);
+                double initialMaxPrice = productMaxPriceRef.get() == null
+                    ? maxPrice
+                    : clampRangeValue(productMaxPriceRef.get().doubleValue(), 0, maxPrice);
+                initialMaxPrice = Math.max(initialMinPrice, initialMaxPrice);
                 Label priceTitle = FilterControlFactory.sectionTitle("Price Range");
                 Label priceLabel = new Label(String.format("%,.0f - %,.0f VND", initialMinPrice, initialMaxPrice));
                 priceLabel.setStyle("-fx-font-size: 12px; -fx-text-fill: -app-primary; -fx-font-weight: bold;");
-                RangeSlider priceSlider = new RangeSlider(0, maxPrice, initialMinPrice, initialMaxPrice, 280);
+                RangeSlider priceSlider = new RangeSlider(0, maxPrice, initialMinPrice, initialMaxPrice, PRODUCT_FILTER_SLIDER_WIDTH);
                 priceSlider.minVal.addListener((o, ov, nv) -> priceLabel.setText(String.format("%,.0f - %,.0f VND", nv.doubleValue(), priceSlider.maxVal.get())));
                 priceSlider.maxVal.addListener((o, ov, nv) -> priceLabel.setText(String.format("%,.0f - %,.0f VND", priceSlider.minVal.get(), nv.doubleValue())));
 
-                double initialMinQty = productMinQtyRef.get() == null ? 0 : productMinQtyRef.get();
-                double initialMaxQty = productMaxQtyRef.get() == null ? maxQty : productMaxQtyRef.get();
-                initialMaxQty = Math.max(initialMinQty, Math.min(initialMaxQty, maxQty));
+                double initialMinQty = productMinQtyRef.get() == null ? 0 : clampRangeValue(productMinQtyRef.get(), 0, maxQty);
+                double initialMaxQty = productMaxQtyRef.get() == null ? maxQty : clampRangeValue(productMaxQtyRef.get(), 0, maxQty);
+                initialMaxQty = Math.max(initialMinQty, initialMaxQty);
                 Label qtyTitle = FilterControlFactory.sectionTitle("Stock Range");
                 Label qtyLabel = new Label(String.format("%d - %d", (int) initialMinQty, (int) initialMaxQty));
                 qtyLabel.setStyle("-fx-font-size: 12px; -fx-text-fill: -app-primary; -fx-font-weight: bold;");
-                RangeSlider qtySlider = new RangeSlider(0, maxQty, initialMinQty, initialMaxQty, 280);
+                RangeSlider qtySlider = new RangeSlider(0, maxQty, initialMinQty, initialMaxQty, PRODUCT_FILTER_SLIDER_WIDTH);
                 qtySlider.minVal.addListener((o, ov, nv) -> qtyLabel.setText(String.format("%d - %d", nv.intValue(), (int) qtySlider.maxVal.get())));
                 qtySlider.maxVal.addListener((o, ov, nv) -> qtyLabel.setText(String.format("%d - %d", (int) qtySlider.minVal.get(), nv.intValue())));
 
@@ -689,6 +715,7 @@ public final class ProductsScene {
                 resetBtn.setOnAction(ae -> {
                     resetAdvancedFiltersRef[0].run();
                     productCurrentPage[0] = 0;
+                    updateActiveFiltersRef[0].run();
                     refreshProductListRef[0].run();
                     filterPopup.hide();
                 });
@@ -702,6 +729,10 @@ public final class ProductsScene {
                     for (javafx.scene.control.CheckBox cb : brandCbs) {
                         if (cb.isSelected()) nextBrands.add(cb.getText());
                     }
+                    if (!allBrandsCb.isSelected() && nextBrands.isEmpty() && !brandCbs.isEmpty()) {
+                        toastService.showWarning("Select at least one brand or choose All Brands.");
+                        return;
+                    }
                     productBrandsRef.set(allBrandsCb.isSelected() ? new java.util.LinkedHashSet<>() : nextBrands);
                     double pMin = priceSlider.minVal.get();
                     double pMax = priceSlider.maxVal.get();
@@ -712,6 +743,7 @@ public final class ProductsScene {
                     productMinQtyRef.set(qMin <= 0 ? null : qMin);
                     productMaxQtyRef.set(qMax >= fMaxQty ? null : qMax);
                     productCurrentPage[0] = 0;
+                    updateActiveFiltersRef[0].run();
                     refreshProductListRef[0].run();
                     filterPopup.hide();
                 });
@@ -719,11 +751,16 @@ public final class ProductsScene {
                 shell.content().getChildren().addAll(
                     brandTitle, brandSection.getNode(), new javafx.scene.control.Separator(),
                     priceTitle, priceLabel, priceSlider, new javafx.scene.control.Separator(),
-                    qtyTitle, qtyLabel, qtySlider,
-                    FilterControlFactory.actionRow(resetBtn, applyBtn)
+                    qtyTitle, qtyLabel, qtySlider
                 );
+                shell.container().getChildren().add(FilterControlFactory.actionRow(resetBtn, applyBtn));
                 filterPopup.getContent().setAll(shell.container());
-                context.support().showPopupBelow(filterPopup, filterButton, -230, 5);
+                context.support().showPopupBelow(
+                    filterPopup,
+                    filterButton,
+                    PRODUCT_FILTER_POPUP_X_OFFSET,
+                    PRODUCT_FILTER_POPUP_Y_OFFSET
+                );
             };
 
             ProductFilterOptionsCache cachedOptions = productFilterOptionsCache.get();
@@ -732,8 +769,13 @@ public final class ProductsScene {
                 return;
             }
 
-            filterPopup.getContent().setAll(FilterControlFactory.loadingContainer(340, "Loading filters..."));
-            context.support().showPopupBelow(filterPopup, filterButton, -230, 5);
+            filterPopup.getContent().setAll(FilterControlFactory.loadingContainer(PRODUCT_FILTER_POPUP_WIDTH, "Loading filters..."));
+            context.support().showPopupBelow(
+                filterPopup,
+                filterButton,
+                PRODUCT_FILTER_POPUP_X_OFFSET,
+                PRODUCT_FILTER_POPUP_Y_OFFSET
+            );
 
             javafx.concurrent.Task<ProductService.CatalogFilterOptions> task = new javafx.concurrent.Task<>() {
                 @Override
@@ -833,6 +875,10 @@ public final class ProductsScene {
 
     private static String formatNullableVnd(SceneRuntimeContext context, BigDecimal amount) {
         return amount == null ? "-" : context.support().formatVnd(amount);
+    }
+
+    private static double clampRangeValue(double value, double min, double max) {
+        return Math.max(min, Math.min(value, max));
     }
 
     private static boolean isProductOutOfStock(Product product) {
