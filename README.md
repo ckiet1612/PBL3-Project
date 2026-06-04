@@ -26,6 +26,36 @@ java -version
 mysql --version
 ```
 
+## Cài đặt Release
+
+Phần này dành cho người dùng cuối cài bản đã đóng gói sẵn. Nếu dùng installer release, người dùng không cần clone code, cài Maven hay tự chạy migration database.
+
+1. Tải file cài đặt từ trang Release hoặc nguồn do nhóm phát hành:
+
+```text
+macOS:   Sales Mgr-<version>.dmg
+Windows: Sales Mgr-<version>.msi
+```
+
+2. Cài ứng dụng:
+
+- macOS: mở file `.dmg`, kéo `Sales Mgr.app` vào thư mục `Applications`, sau đó mở ứng dụng.
+- Windows: chạy file `.msi` và làm theo các bước cài đặt.
+
+3. Mở ứng dụng và chọn workspace doanh nghiệp:
+
+- Nếu là doanh nghiệp mới, chọn tạo workspace/business mới và nhập thông tin tài khoản quản trị.
+- Nếu đã có doanh nghiệp, nhập mã doanh nghiệp và mã PIN/kết nối do quản trị viên cung cấp.
+
+4. Đăng nhập bằng tài khoản đã tạo cho workspace đó.
+
+Lưu ý:
+
+- Bản release cần kết nối tới Provisioning API đã được cấu hình khi đóng gói.
+- Nếu app báo không kết nối được Provisioning API, kiểm tra internet hoặc cấu hình server phát hành.
+- Tài khoản `admin/admin` chỉ dành cho database local/dev, không phải tài khoản mặc định của bản release nhiều workspace.
+- Không đưa mật khẩu database admin/root vào máy người dùng cuối.
+
 ## Cài đặt local
 
 1. Clone repo và vào thư mục dự án:
