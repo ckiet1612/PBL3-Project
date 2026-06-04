@@ -49,13 +49,6 @@ Windows: Sales Mgr-<version>.msi
 
 4. Đăng nhập bằng tài khoản đã tạo cho workspace đó.
 
-Lưu ý:
-
-- Bản release cần kết nối tới Provisioning API đã được cấu hình khi đóng gói.
-- Nếu app báo không kết nối được Provisioning API, kiểm tra internet hoặc cấu hình server phát hành.
-- Tài khoản `admin/admin` chỉ dành cho database local/dev, không phải tài khoản mặc định của bản release nhiều workspace.
-- Không đưa mật khẩu database admin/root vào máy người dùng cuối.
-
 ## Cài đặt local
 
 1. Clone repo và vào thư mục dự án:
