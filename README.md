@@ -11,22 +11,7 @@
 - Tích hợp thanh toán QR qua SePay/VietQR khi cấu hình API token.
 - Hỗ trợ desktop client theo workspace tenant và provisioning API cho bản phát hành.
 
-## Yêu cầu môi trường
-
-- JDK 21 trở lên.
-- Maven Wrapper đã có sẵn trong repo (`./mvnw` hoặc `mvnw.cmd`).
-- MySQL 8.x hoặc TiDB dùng giao thức MySQL.
-- Git và terminal.
-
-Kiểm tra nhanh:
-
-```bash
-java -version
-./mvnw -version
-mysql --version
-```
-
-## Cài đặt Release
+## Cài đặt Release (Không yêu cầu môi trường, sử dụng như app native)
 
 Phần này dành cho người dùng cuối cài bản đã đóng gói sẵn. Nếu dùng installer release, người dùng không cần clone code, cài Maven hay tự chạy migration database.
 
@@ -48,6 +33,21 @@ Windows: Sales Mgr-<version>.msi
 - Nếu đã có doanh nghiệp, nhập mã doanh nghiệp và mã PIN/kết nối do quản trị viên cung cấp.
 
 4. Đăng nhập bằng tài khoản đã tạo cho workspace đó.
+
+## Yêu cầu môi trường
+
+- JDK 21 trở lên.
+- Maven Wrapper đã có sẵn trong repo (`./mvnw` hoặc `mvnw.cmd`).
+- MySQL 8.x hoặc TiDB dùng giao thức MySQL.
+- Git và terminal.
+
+Kiểm tra nhanh:
+
+```bash
+java -version
+./mvnw -version
+mysql --version
+```
 
 ## Cài đặt Local
 
