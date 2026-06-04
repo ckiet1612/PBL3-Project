@@ -49,7 +49,7 @@ Windows: Sales Mgr-<version>.msi
 
 4. Đăng nhập bằng tài khoản đã tạo cho workspace đó.
 
-## Cài đặt local
+## Cài đặt Local
 
 1. Clone repo và vào thư mục dự án:
 
